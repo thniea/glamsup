@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sign up · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  .auth-wrap{ padding-top: 2rem; padding-bottom: 3rem; }
+  .auth-title{ text-align:center; font-weight:900; margin-bottom:1rem; }
+  .auth-sub{ text-align:center; color:var(--muted); margin-top:-.4rem; margin-bottom:1.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container container-narrow auth-wrap">
+  {% include "includes/_messages.html" %}
+
+  <div class="form-box">
+    <h2 class="auth-title">Sign up</h2>
+    <div class="auth-sub">Create your Glamup Nails account ✨</div>
+
+    <form method="post" action="{% url 'main:signup' %}" novalidate>
+      {% csrf_token %}
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      {# Hiển thị lỗi chung #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Username</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Full name</label>
+        {{ form.full_name }}
+        {{ form.full_name.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Email</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Password</label>
+        {{ form.password1 }}
+        {{ form.password1.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Confirm password</label>
+        {{ form.password2 }}
+        {{ form.password2.errors }}
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-brand btn-lg">Create account</button>
+      </div>
+
+      <div class="actions d-flex justify-content-center gap-2 mt-3">
+        <span class="text-muted">Already have an account?</span>
+        <a class="fw-bold text-brand" href="{% url 'main:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Log in</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

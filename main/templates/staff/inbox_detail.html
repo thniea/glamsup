@@ -1,0 +1,133 @@
+    {% extends "base_staff.html" %}
+{% load static %}
+
+{% block title %}Message #{{ item.id }} · GlamUp{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --edge:#a5aa7f; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+
+  /* Khung ngoài giống Staff Schedule */
+  .card-soft{
+    border:2px solid #cfd3a9;
+    border-radius:16px;
+    background:#fff;
+    padding:24px;
+  }
+
+  /* Card con */
+  .card{ border:1px solid #e6ebd4; border-radius:16px; }
+  .btn-ghost{ background:#f8f9f6; border:1px solid #cfd3a9; border-radius:8px; }
+  .btn-ghost:hover{ background:#eaece2; }
+
+  .status-badge{padding:.25rem .6rem; border-radius:999px; font-weight:700; font-size:.85rem;}
+  .s-new{ background:#eef6ff; border:1px solid #b6d6ff; }
+  .s-prog{ background:#fff6e6; border:1px solid #ffd59e; }
+  .s-done{ background:#e9f7ec; border:1px solid #bfe6c9; }
+  .key{ width:140px; color:#6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar Staff -->
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_staff.html' with active='inbox' %}
+  </div>
+
+  <!-- Nội dung -->
+  <div class="col-lg-9 col-md-8">
+    <h1 class="h4 fw-bold text-center mb-3">STAFF INBOX DETAIL</h1>
+
+    <!-- ===== KHUNG NGOÀI ===== -->
+    <div class="card-soft">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Message #{{ item.id }}</h2>
+        <a href="{% url 'main:staff_inbox' %}" class="btn btn-ghost">
+          <i class="bi bi-arrow-left"></i> Back to Inbox
+        </a>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header"><strong>Customer message</strong></div>
+            <div class="card-body">
+              <div class="d-flex mb-2">
+                <div class="key">Full name: </div>
+                <div>{{ item.full_name }}</div>
+              </div>
+              <div class="d-flex mb-2">
+                <div class="key">Phone: </div>
+                <div><a href="tel:{{ item.phone }}">{{ item.phone }}</a></div>
+              </div>
+              <div class="d-flex mb-2">
+                <div class="key">Email: </div>
+                <div><a href="mailto:{{ item.email }}">{{ item.email }}</a></div>
+              </div>
+              {% if item.branch_name %}
+              <div class="d-flex mb-2">
+                <div class="key">Branch: </div>
+                <div>{{ item.branch_name }}</div>
+              </div>
+              {% endif %}
+              <div class="d-flex mb-3">
+                <div class="key">Status: </div>
+                <div>
+                  <span class="status-badge {% if item.status == 'new' %}s-new{% elif item.status == 'in_progress' %}s-prog{% else %}s-done{% endif %}">
+                    {{ item.status|title }}
+                  </span>
+                </div>
+              </div>
+              <hr>
+              <div style="white-space: pre-line">{{ item.content }}</div>
+              <hr>
+              <small class="text-muted">Created at: {{ item.created_at|date:"d/m/Y H:i" }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-header"><strong>Handle</strong></div>
+            <div class="card-body">
+              <form method="post" action="{% url 'main:staff_inbox_update' item.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label">Status</label>
+                  {{ form.status }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Assignee</label>
+                  {{ form.assigned_to }}
+                </div>
+                <button class="btn btn-dark w-100" type="submit">Update</button>
+              </form>
+
+              <hr>
+              <div class="d-grid gap-2">
+                {% if item.status == 'new' %}
+                  <form method="post" action="{% url 'main:staff_inbox_update' item.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="in_progress">
+                    <button class="btn btn-ghost w-100">Mark In progress</button>
+                  </form>
+                {% elif item.status == 'in_progress' %}
+                  <form method="post" action="{% url 'main:staff_inbox_update' item.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="resolved">
+                    <button class="btn btn-ghost w-100">Resolve</button>
+                  </form>
+                {% else %}
+                  <div class="text-muted text-center">This message is resolved.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /row -->
+    </div><!-- /card-soft -->
+  </div>
+</div>
+{% endblock %}

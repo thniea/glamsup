@@ -1,0 +1,246 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}Admin Dashboard · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f;
+    --bg:#f6f5ec;
+    --olive:#2b3220;
+    --edge:#a5aa7f;
+  }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+
+  /* Chỉ giữ phần style riêng của page (card, header…), sidebar đã có trong base_admin */
+  .card{ border:2px solid #cfd3a9; border-radius:12px; }
+  .card-header{ background:#fdfcf6; border-bottom:2px solid #e4e1cf; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar (đồng bộ) -->
+  <div class="col-md-4 col-lg-3">
+    {% include 'includes/_sidebar_admin.html' with active='dashboard' %}
+  </div>
+     <div class="col-lg-9">
+    <div class="toolbar">
+  <h1 class="h4 mb-3 fw-bold text-center">DASHBOARD OVERVIEW</h1>
+
+  <!-- Filters -->
+  <form class="row g-2 align-items-end mb-4" method="get">
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Branch</label>
+      <select name="branch" class="form-select">
+        <option value="">— All branches —</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}" {% if current_branch|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Period</label>
+      <select name="period" id="period" class="form-select">
+        <option value="week"  {% if period == 'week' %}selected{% endif %}>This week</option>
+        <option value="month" {% if period == 'month' %}selected{% endif %}>This month</option>
+        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom</option>
+      </select>
+    </div>
+    <div class="col-md-3 custom-range">
+      <label class="form-label small mb-1">From</label>
+      <input type="date" name="from" value="{{ date_from }}" class="form-control">
+    </div>
+    <div class="col-md-3 custom-range">
+      <label class="form-label small mb-1">To</label>
+      <input type="date" name="to" value="{{ date_to }}" class="form-control">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary">Apply</button>
+    </div>
+    <div class="col-auto ms-auto">
+      <a class="btn btn-primary"
+   href="?period={{ period }}&branch={{ current_branch }}&from={{ date_from }}&to={{ date_to }}&export=1">
+  Export CSV
+</a>
+    </div>
+  </form>
+
+  <!-- KPIs -->
+  <div class="row g-4 mb-2">
+    <div class="col-md-3">
+      <div class="card border-2">
+        <div class="card-body text-center">
+          <div class="text-muted small">Total bookings</div>
+          <div class="fs-3 fw-bold">{{ total_bookings }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-2">
+        <div class="card-body text-center">
+          <div class="text-muted small">Total revenue</div>
+          <div class="fs-3 fw-bold text-success">{{ total_revenue|floatformat:0 }}₫</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-2">
+        <div class="card-body text-center">
+          <div class="text-muted small">Period</div>
+          <div class="fw-semibold">{{ date_start|date:"d/m/Y" }} – {{ date_end|date:"d/m/Y" }}</div>
+        </div>
+      </div>
+    </div>
+   <div class="col-md-3">
+  <div class="card border-2">
+    <div class="card-body text-center">
+      <div class="text-muted small">Branch</div>
+      <div class="fw-semibold">
+        {{ branch_label }}
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header bg-transparent fw-semibold">Bookings by day</div>
+        <div class="card-body"><canvas id="chartTimeseries" height="150"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header bg-transparent fw-semibold">Revenue by service</div>
+        <div class="card-body"><canvas id="chartRevenueByService" height="150"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header bg-transparent fw-semibold">Popular services (share)</div>
+        <div class="card-body"><canvas id="chartPopular" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Latest feedback -->
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header bg-transparent fw-semibold">Latest feedback</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table m-0 align-middle">
+              <thead class="table-light">
+  <tr>
+    <th>Date</th>
+    <th>Service</th>
+    <th>Customer</th>
+    <th>Content</th>
+    <th>Rating</th>
+    <th></th>
+  </tr>
+</thead>
+
+              <tbody>
+  {% for f in latest_feedback %}
+  <tr>
+    <!-- chỉ hiện ngày -->
+    <td class="text-nowrap">{{ f.date|date:"d/m/Y" }}</td>
+
+    <!-- dịch vụ -->
+    <td class="text-nowrap">
+      {% if f.service %}
+        {{ f.service.service_name }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+
+    <!-- khách hàng -->
+    <td>{{ f.user.get_full_name|default:f.user.username }}</td>
+
+    <!-- nội dung -->
+    <td style="max-width:260px;" class="text-truncate">
+      {{ f.comment }}
+    </td>
+
+    <!-- rating -->
+    <td>
+      {% if f.rating %}
+        <span class="badge bg-warning text-dark">{{ f.rating }}★</span>
+      {% endif %}
+    </td>
+
+    <!-- nút View -->
+    <td class="text-end">
+      {% if f.service_slug %}
+        <a class="btn btn-sm btn-outline-secondary"
+           href="{% url 'main:service_detail' f.service_slug %}#reviews">
+          View
+        </a>
+      {% else %}
+        —
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="6" class="text-center text-muted py-4">No feedback.</td>
+  </tr>
+  {% endfor %}
+</tbody>
+
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart data -->
+  {{ ts_labels|json_script:"ts-labels" }}
+  {{ ts_values|json_script:"ts-values" }}
+  {{ revenue_labels|json_script:"rev-labels" }}
+  {{ revenue_values|json_script:"rev-values" }}
+  {{ popular_labels|json_script:"pop-labels" }}
+  {{ popular_counts|json_script:"pop-values" }}
+{% endblock %}
+
+{% block body_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  // Custom range toggle
+  const periodSel = document.getElementById('period');
+  const customEls = document.querySelectorAll('.custom-range');
+  const toggleRange = ()=>{ const on = periodSel.value==='custom'; customEls.forEach(e=>e.style.display=on?'':'none'); };
+  toggleRange(); periodSel.addEventListener('change', toggleRange);
+
+  const tsLabels = JSON.parse(document.getElementById('ts-labels').textContent || '[]');
+  const tsValues = JSON.parse(document.getElementById('ts-values').textContent || '[]');
+  const revLabels = JSON.parse(document.getElementById('rev-labels').textContent || '[]');
+  const revValues = JSON.parse(document.getElementById('rev-values').textContent || '[]');
+  const popLabels = JSON.parse(document.getElementById('pop-labels').textContent || '[]');
+  const popValues = JSON.parse(document.getElementById('pop-values').textContent || '[]');
+
+  const olive = '#a5aa7f', sage = '#cfd3a9';
+
+  new Chart(document.getElementById('chartTimeseries'), {
+    type:'line', data:{ labels:tsLabels, datasets:[{ label:'Bookings', data:tsValues, borderColor:olive, backgroundColor:'rgba(165,170,127,.2)', tension:.25, fill:true }]},
+    options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, precision:0}} }
+  });
+  new Chart(document.getElementById('chartRevenueByService'), {
+    type:'bar', data:{ labels:revLabels, datasets:[{ data:revValues, backgroundColor:olive }]},
+    options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+  });
+  new Chart(document.getElementById('chartPopular'), {
+    type:'doughnut', data:{ labels:popLabels, datasets:[{ data:popValues, backgroundColor:[olive,sage,'#e9e5d8','#c7d3a7','#d3dec1','#bfc8a1'] }]},
+    options:{ plugins:{legend:{position:'bottom'}} }
+  });
+})();
+</script>
+{% endblock %}

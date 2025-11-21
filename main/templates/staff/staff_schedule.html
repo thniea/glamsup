@@ -1,0 +1,144 @@
+{% extends 'base_staff.html' %}
+{% load static %}
+
+{% block title %}Staff Schedule · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220; --edge:#a5aa7f; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .week-chip{ background:#dfe7c7; border:2px solid rgba(0,0,0,.08); border-radius:10px; font-weight:700; color:#1e1e1e; }
+  .week-chip i{ color:#4a512f; }
+  .card-soft{ border:2px solid #cfd3a9; border-radius:16px; background:#fff }
+  .schedule-table thead th{ background:#cfd3a9; color:#111; font-weight:800; text-align:center; }
+  .schedule-table th, .schedule-table td{ vertical-align:middle; text-align:center }
+  .schedule-table th:first-child{ width:160px }
+  .cell{ min-height:72px; cursor:pointer; }
+  .cell .small{ display:block; margin-top:.25rem; }
+  .slot-empty{ color:#9aa3a3 }
+  .badge-slot{ display:inline-block; padding:.35rem .8rem; border-radius:10px; border:1.8px solid #cfd3a9; font-weight:800; background:#f2f5e6; color:#1e1f1c; }
+  .badge-slot.approved{ background:#ffd24d; border-color:#e5b700; }
+  .badge-slot.pending { background:#dfe7c7; border-color:#a5aa7f; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_staff.html' with active='schedule' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <h1 class="h4 fw-bold text-center mb-3">STAFF SCHEDULE</h1>
+
+    <!-- Controls -->
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <div class="week-chip d-flex align-items-center gap-2 px-3 py-2">
+          <i class="bi bi-calendar-week"></i>
+          <span>{{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}</span>
+        </div>
+        <a class="btn btn-outline-secondary" href="?start={{ prev_start }}" title="Previous week"><i class="bi bi-chevron-left"></i></a>
+        <a class="btn btn-outline-secondary" href="?start={{ next_start }}" title="Next week"><i class="bi bi-chevron-right"></i></a>
+      </div>
+
+      <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#addShiftModal">
+        <i class="bi bi-pencil-square me-2"></i>Add Work Schedule
+      </button>
+    </div>
+
+    <!-- Calendar -->
+    <div class="card-soft">
+      <div class="table-responsive">
+        <table class="table table-bordered m-0 schedule-table">
+          <thead>
+            <tr>
+              <th>Shift</th>
+              {% for d in days %}
+                <th>
+                  <div class="fw-bold">{{ d|date:"D" }}</div>
+                  <div class="small">{{ d|date:"d" }}</div>
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <th>{{ row.label }}</th>
+                {% for s in row.slots %}
+                  <td class="cell" data-date="{{ s.day|date:'Y-m-d' }}" data-shift="{{ row.key }}">
+                    {% if s.obj %}
+                      {% if s.obj.status == STATUS.APPROVED %}
+                        <span class="badge-slot approved">On</span>
+                        {% if s.obj.branch %}<span class="small text-muted">{{ s.obj.branch.name }}</span>{% endif %}
+                      {% elif s.obj.status == STATUS.PENDING %}
+                        <span class="badge-slot pending">Waiting</span>
+                      {% else %}
+                        <span class="slot-empty">—</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="slot-empty">—</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {# đã bỏ legend màu vì không còn cần #}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add shift -->
+<div class="modal fade" id="addShiftModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title">Request a shift</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Date</label>
+          <input type="date" name="work_date" class="form-control"
+                 min="{{ week_start|date:'Y-m-d' }}" max="{{ week_end|date:'Y-m-d' }}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Shift</label>
+          <select name="shift" class="form-select">
+            <option value="MORNING">Morning</option>
+            <option value="AFTERNOON">Afternoon</option>
+            <option value="EVENING">Evening</option>
+          </select>
+        </div>
+        <div class="small text-muted">Yêu cầu sẽ ở trạng thái <b>Waiting</b> cho đến khi Admin duyệt và gán cơ sở làm việc.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-dark">Send request</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('td.cell').forEach(function(td){
+    td.addEventListener('click', function(){
+      const date = td.getAttribute('data-date');
+      const shift = td.getAttribute('data-shift');
+      const modal = document.getElementById('addShiftModal');
+      modal.querySelector('input[name="work_date"]').value = date;
+      modal.querySelector('select[name="shift"]').value = shift;
+      new bootstrap.Modal(modal).show();
+    });
+  });
+});
+</script>
+{% endblock %}

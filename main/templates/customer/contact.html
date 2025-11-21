@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contact · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#fffbf5; --ink:#1e2417; --edge:#dfe5c7; }
+  body{ background:var(--bg); }
+  .c-wrap{ max-width:1100px; margin:auto; }
+  .c-card{ background:#fff; border:1px solid var(--edge); border-radius:18px; box-shadow:0 6px 20px rgba(30,36,23,.06); }
+  .c-title{ color:var(--ink); letter-spacing:.3px; }
+  .info-chip{ display:flex; gap:.75rem; align-items:flex-start; padding:.75rem 0; }
+  .info-chip i{ font-size:1.1rem; color:var(--brand); margin-top:.2rem; }
+  .brand-badge{ border:1px dashed var(--edge); border-radius:14px; padding:.6rem .8rem; font-weight:700; }
+  .btn-brand{ background:var(--brand); color:#fff; border:none; }
+  .btn-brand:hover{ filter:brightness(.95); }
+  .form-label{ font-weight:700; color:var(--ink); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5 c-wrap">
+  <div class="row g-4 align-items-stretch">
+    <!-- LEFT: Info -->
+    <div class="col-12 col-lg-5">
+      <div class="c-card p-4 p-md-4 h-100">
+        <h2 class="c-title fw-black mb-3">Contact Glamup Nails</h2>
+        <p class="mb-3">Call us, send an email, or leave your message — our front desk will get back to you shortly.</p>
+
+        <!-- Phone -->
+        <div class="info-chip">
+          <i class="bi bi-telephone-forward"></i>
+          <div>
+            <div class="small text-muted">Hotline</div>
+            <a class="fw-bold link-underline link-underline-opacity-0" href="tel:{{ brand.phone_tel }}">{{ brand.phone_display }}</a>
+          </div>
+        </div>
+
+        <!-- Email (show “GlamUp”, still mailto the real address) -->
+        <div class="info-chip">
+          <i class="bi bi-envelope-paper"></i>
+          <div>
+            <div class="small text-muted">Email</div>
+            <a class="fw-bold link-underline link-underline-opacity-0" href="mailto:{{ brand.email }}">GlamUp</a>
+          </div>
+        </div>
+
+        <!-- Working hours -->
+        <div class="info-chip">
+          <i class="bi bi-clock-history"></i>
+          <div>
+            <div class="small text-muted">Working hours</div>
+            <div class="brand-badge">{{ brand.hours }}</div>
+          </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="info-chip">
+          <i class="bi bi-geo-alt"></i>
+          <div>
+            <div class="small text-muted">Locations</div>
+            <ul class="mb-0 ps-3">
+              {% for addr in brand.addresses %}
+                <li>{{ addr }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- NOTE: Partner/brand badges REMOVED as requested -->
+      </div>
+    </div>
+
+    <!-- RIGHT: Form -->
+    <div class="col-12 col-lg-7">
+      <div class="c-card p-4 p-md-4 h-100">
+        <h3 class="c-title fw-bold mb-3">Send us a message</h3>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full name</label>
+              {{ form.full_name }}
+              {% for e in form.full_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Gmail</label>
+              {{ form.email }}
+              {% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone number</label>
+              {{ form.phone }}
+              {% for e in form.phone.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Branch (optional)</label>
+              {{ form.branch_name }}
+              {% for e in form.branch_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <label class="form-label">How can we help?</label>
+              {{ form.content }}
+              {% for e in form.content.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-brand px-4 rounded-pill fw-semibold" type="submit">
+              <i class="bi bi-send me-1"></i> Submit
+            </button>
+            <a class="btn btn-outline-secondary rounded-pill" href="mailto:{{ brand.email }}">
+              Email GlamUp
+            </a>
+            <a class="btn btn-outline-secondary rounded-pill" href="tel:{{ brand.phone_tel }}">
+              Call now
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}Edit Service · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .title{ font-weight:900; letter-spacing:.5px; }
+  .thumb-lg{ width:120px; height:120px; border-radius:14px; object-fit:cover; border:3px solid var(--brand); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='service' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+
+    <h2 class="title text-center mb-3">EDIT SERVICE</h2>
+
+    <div class="card border-2">
+      <div class="card-body">
+        <div class="row g-4 align-items-center">
+
+          <div class="col-md-3 text-center">
+            {% if service.thumbnail_url %}
+              <img class="thumb-lg" src="{{ service.thumbnail_url }}" alt="">
+            {% else %}
+              <img class="thumb-lg" src="{% static 'images/placeholder.png' %}" alt="">
+            {% endif %}
+            <div class="small text-muted mt-2">Preview</div>
+          </div>
+
+          <div class="col-md-9">
+            <form method="post" enctype="multipart/form-data" novalidate>
+              {% csrf_token %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Name</label>
+                  {{ form.service_name }}
+                  {% if form.service_name.errors %}<div class="text-danger small">{{ form.service_name.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Price (VND)</label>
+                  {{ form.price }}
+                  {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Order status</label>
+                  {{ form.is_active }}
+                  {% if form.is_active.errors %}<div class="text-danger small">{{ form.is_active.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Thumbnail</label>
+                  {{ form.image }}
+                  {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <!-- >>> THÊM Duration -->
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Duration (minutes)</label>
+                  {{ form.duration }}
+                  {% if form.duration.errors %}<div class="text-danger small">{{ form.duration.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Category</label>
+                  {{ form.category }}
+                  {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors|striptags }}</div>{% endif %}
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Description</label>
+                  {{ form.description }}
+                  {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors|striptags }}</div>{% endif %}
+                </div>
+              </div>
+
+              <div class="mt-4 d-flex gap-2">
+                <a href="{% url 'main:admin_service' %}" class="btn btn-outline-secondary">Back</a>
+                <button class="btn btn-primary">Save changes</button>
+
+                <!-- >>> Nút Delete -->
+                <button type="button" class="btn btn-outline-danger ms-auto" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                  Delete
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- >>> Modal xác nhận xoá -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" method="post" action="{% url 'main:admin_service_delete' obj.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title">Delete service</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            Bạn có chắc muốn xoá dịch vụ <strong>{{ obj.service_name }}</strong>? Thao tác không thể hoàn tác.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

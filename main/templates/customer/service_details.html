@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ service.name|default:"Service details" }} · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f; --brand-strong:#8b9361; --ink:#2b3220; --star:#f5b800;
+  }
+  .wrap{max-width:1180px;margin:24px auto 72px;padding:0 16px;color:var(--ink)}
+
+  .top{display:grid;grid-template-columns:520px 1fr;gap:28px;align-items:start}
+  @media (max-width:1024px){ .top{grid-template-columns:1fr} }
+
+  .photo{border:3px solid var(--brand-strong);border-radius:16px;overflow:hidden;background:#fff}
+  .photo img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+
+  .title{font-weight:900;font-size:36px;line-height:1.15;margin:4px 0 10px}
+
+  /* STAR STRIP */
+  .stars{color:var(--star);letter-spacing:2px;font-size:18px;line-height:1;display:flex;align-items:center;gap:4px}
+  .stars i{font-size:18px;}
+  .rating-note{font-weight:800;margin-left:6px;color:#333}
+
+  .price-wrap{display:flex;align-items:center;gap:10px;margin:12px 0 6px}
+  .chip{display:inline-block;border:2px solid var(--brand-strong);border-radius:12px;padding:8px 14px;font-weight:900;background:#fff;color:var(--ink)}
+  .desc{margin-top:10px}
+
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+  .btn{border:2px solid var(--brand-strong);border-radius:12px;background:#fff;padding:10px 16px;font-weight:900;color:var(--brand-strong);text-decoration:none}
+  .btn:hover{background:var(--brand-strong);color:#fff}
+
+  .section{margin-top:32px}
+  .section h3{font-weight:900;margin:0 0 12px;font-size:22px}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:900px){ .steps{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .steps{grid-template-columns:1fr} }
+  .step{display:grid;grid-template-columns:94px 1fr;gap:12px;align-items:center;border:2px solid var(--brand-strong);border-radius:12px;background:#fff;padding:10px}
+  .step img{width:94px;height:94px;object-fit:cover;border-radius:10px;border:2px solid var(--brand)}
+  .step .s-title{font-weight:900;margin-bottom:4px}
+
+  .reviews{display:grid;gap:12px}
+  .review{border:2px solid var(--brand-strong);border-radius:12px;padding:14px;background:#fff}
+  .r-head{display:flex;gap:10px;align-items:center;margin-bottom:6px;justify-content:space-between}
+  .r-date{font-weight:700;color:#6b6a5d}
+  .r-name{font-weight:900}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+
+  <div class="top">
+    <div class="photo">
+  {% if service.image %}
+    <img src="{{ service.image.url }}"
+         alt="{{ service.name|default:service.service_name|default:'Service' }}">
+  {% else %}
+    <img src="{% static 'images/manicure1.jpg' %}"
+         alt="{{ service.name|default:service.service_name|default:'Service' }}">
+  {% endif %}
+</div>
+
+
+    <div>
+      <div class="title">{{ service.name|default:"PINK & GOLD · MARBLE DREAM" }}</div>
+
+      {# ===== AVG RATING (dải sao dưới tên sp) ===== #}
+      {% with r=service.avg_rating|default:avg_rating %}
+        {% if r %}
+          <div class="stars" aria-label="{{ r|floatformat:1 }} out of 5">
+            {% for _ in "12345"|make_list %}
+              {% if forloop.counter <= r %}
+                <i class="bi bi-star-fill"></i>
+              {% else %}
+                <i class="bi bi-star"></i>
+              {% endif %}
+            {% endfor %}
+            <span class="rating-note">{{ r|floatformat:1 }}/5</span>
+            {% if total_reviews %}
+              <span class="rating-note">({{ total_reviews }})</span>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="stars" aria-label="No ratings yet">
+            {% for _ in "12345"|make_list %}<i class="bi bi-star"></i>{% endfor %}
+            <span class="rating-note">No ratings yet</span>
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <div class="price-wrap">
+        <span class="chip">{{ service.price|default:200000 }}₫</span>
+        <span class="chip">Duration: {{ service.duration|default:60 }}’</span>
+      </div>
+
+      <p class="desc">
+        {{ service.description|default:"Dịch vụ gồm các bước chăm sóc móng chuyên sâu, giúp bề mặt móng mịn và đều màu, bền màu và bóng đẹp." }}
+      </p>
+
+      <div class="cta">
+        <a class="btn" href="{% url 'main:services' %}">← Back to Services</a>
+        <a class="btn btn-brand" href="{% url 'main:book' %}?service={{ service.slug|default:service.id }}">
+          Book now
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <section class="section">
+    <h3>OUR 6-STEP PROCESS</h3>
+    <div class="steps">
+      {% if service.steps %}
+        {% for s in service.steps %}
+          <div class="step">
+            <img src="{{ s.img|default:'/static/images/manicure2.jpg' }}" alt="">
+            <div>
+              <div class="s-title">{{ s.title }}</div>
+              <div class="s-desc">{{ s.desc }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="step">
+          <img src="{% static 'images/manicure2.jpg' %}" alt="">
+          <div><div class="s-title">Step 1: Prepare tools & clean nails.</div></div>
+        </div>
+        <div class="step">
+          <img src="{% static 'images/more4.jpg' %}" alt="">
+          <div><div class="s-title">Step 2: Trim and shape nails.</div></div>
+        </div>
+        <div class="step">
+          <img src="{% static 'images/manicure3.jpg' %}" alt="">
+          <div><div class="s-title">Step 3: Care for cuticles.</div></div>
+        </div>
+        <div class="step">
+          <img src="{% static 'images/manicure4.jpg' %}" alt="">
+          <div><div class="s-title">Step 4: Base coat & color polish.</div></div>
+        </div>
+        <div class="step">
+          <img src="{% static 'images/more6.jpg' %}" alt="">
+          <div><div class="s-title">Step 5: Nail art (optional).</div></div>
+        </div>
+        <div class="step">
+          <img src="{% static 'images/manicure5.jpg' %}" alt="">
+          <div><div class="s-title">Step 6: Top coat & dry.</div></div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ===== Reviews ===== #}
+  <section class="section">
+    <h3>CUSTOMER FEEDBACK{% if total_reviews %} ({{ total_reviews }}){% endif %}</h3>
+    <div class="reviews">
+      {% if reviews %}
+        {% for r in reviews %}
+          <article class="review">
+            <div class="r-head">
+              <div>
+                <div class="r-name">
+                  {{ r.customer.full_name|default:r.customer.username }}
+                </div>
+                <div class="r-date">{{ r.review_date|date:"d/m/Y" }}</div>
+              </div>
+
+              <div class="stars" aria-label="{{ r.rating }} out of 5">
+                {% for _ in "12345"|make_list %}
+                  {% if forloop.counter <= r.rating %}
+                    <i class="bi bi-star-fill"></i>
+                  {% else %}
+                    <i class="bi bi-star"></i>
+                  {% endif %}
+                {% endfor %}
+                <span class="rating-note">{{ r.rating|floatformat:1 }}/5</span>
+              </div>
+            </div>
+
+            <div>{{ r.comment }}</div>
+
+            {% if r.image %}
+              <div class="mt-2">
+                <img src="{{ r.image.url }}" alt=""
+                     style="max-width:160px;border-radius:8px;border:2px solid #c9cda9;">
+              </div>
+            {% endif %}
+
+            {% if r.admin_reply %}
+              <div class="mt-2 p-2" style="border-left:4px solid #8b9361;background:#f5f8ed;">
+                <div class="small fw-bold">GlamUp Nails:</div>
+                <div class="small">{{ r.admin_reply }}</div>
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      {% else %}
+        <div class="review">Chưa có đánh giá cho dịch vụ này.</div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

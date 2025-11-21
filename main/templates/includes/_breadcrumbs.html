@@ -1,0 +1,13 @@
+{# Cần: 'items' = list các dict {title, url} (url có thể None cho item cuối) #}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'main:home' %}">Trang chủ</a></li>
+    {% for it in items %}
+      {% if forloop.last or not it.url %}
+        <li class="breadcrumb-item active" aria-current="page">{{ it.title }}</li>
+      {% else %}
+        <li class="breadcrumb-item"><a href="{{ it.url }}">{{ it.title }}</a></li>
+      {% endif %}
+    {% endfor %}
+  </ol>
+</nav>

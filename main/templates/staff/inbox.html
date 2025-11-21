@@ -1,0 +1,146 @@
+{% extends "base_staff.html" %}
+{% load static %}
+
+{% block title %}Staff Inbox · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --edge:#a5aa7f; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+
+  /* Khung ngoài giống Staff Schedule */
+  .card-soft{
+    border:2px solid #cfd3a9;
+    border-radius:16px;
+    background:#fff;
+    padding:24px;
+  }
+
+  /* KPI boxes */
+  .kpi{
+    border:1.8px solid #cfd3a9;
+    border-radius:14px;
+    background:#f9faf3;
+    padding:16px;
+    text-align:center;
+  }
+  .kpi .label{ color:#606a3b; font-weight:700; }
+  .kpi .num{ font-weight:800; font-size:1.25rem; }
+
+  /* Table + buttons */
+  .table td, .table th{ vertical-align:middle; }
+  .status-badge{ padding:.25rem .6rem; border-radius:999px; font-weight:700; font-size:.85rem; }
+  .s-new{ background:#eef6ff; border:1px solid #b6d6ff; }
+  .s-prog{ background:#fff6e6; border:1px solid #ffd59e; }
+  .s-done{ background:#e9f7ec; border:1px solid #bfe6c9; }
+  .btn-ghost{ background:#f8f9f6; border:1px solid #cfd3a9; }
+  .btn-ghost:hover{ background:#eaece2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar -->
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_staff.html' with active='inbox' %}
+  </div>
+
+  <!-- Main -->
+  <div class="col-lg-9 col-md-8">
+    <h1 class="h4 fw-bold text-center mb-3">STAFF INBOX</h1>
+
+    <div class="card-soft">
+      <!-- KPI -->
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="kpi"><div class="label">New</div><div class="num">{{ counts.new|default:0 }}</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="label">In progress</div><div class="num">{{ counts.in_progress|default:0 }}</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="label">Resolved</div><div class="num">{{ counts.resolved|default:0 }}</div></div></div>
+        <div class="col-6 col-md-3"><div class="kpi"><div class="label">Total</div><div class="num">{{ counts.total|default:0 }}</div></div></div>
+      </div>
+
+      <!-- Filters -->
+      <form class="row g-2 align-items-end mb-3" method="get">
+        <div class="col-md-6">
+          <label class="form-label">Search</label>
+          <input type="text" name="q" value="{{ q }}" class="form-control"
+                 placeholder="Search name / phone / email / content">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All</option>
+            <option value="new" {% if status == 'new' %}selected{% endif %}>New</option>
+            <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In progress</option>
+            <option value="resolved" {% if status == 'resolved' %}selected{% endif %}>Resolved</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-dark w-100"><i class="bi bi-funnel"></i> Apply</button>
+        </div>
+      </form>
+
+      <!-- List -->
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th style="width:160px;">Time</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Branch</th>
+              <th>Status</th>
+              <th>Assignee</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for it in items %}
+            <tr>
+              <td>{{ it.created_at|date:"d/m/Y H:i" }}</td>
+              <td>{{ it.full_name }}</td>
+              <td><a href="tel:{{ it.phone }}">{{ it.phone }}</a></td>
+              <td><a href="mailto:{{ it.email }}">{{ it.email }}</a></td>
+              <td>{{ it.branch_name|default:"—" }}</td>
+              <td>
+                <span class="status-badge {% if it.status == 'new' %}s-new{% elif it.status == 'in_progress' %}s-prog{% else %}s-done{% endif %}">
+                  {{ it.status|title }}
+                </span>
+              </td>
+              <td>{% if it.assigned_to %}{{ it.assigned_to.get_full_name|default:it.assigned_to.username }}{% else %}-{% endif %}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-dark" href="{% url 'main:staff_inbox_detail' it.id %}">View</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-center text-muted py-4">No messages.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if is_paginated %}
+      <nav aria-label="Inbox pages">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}">«</a></li>
+          {% else %}<li class="page-item disabled"><span class="page-link">«</span></li>{% endif %}
+
+          {% for p in paginator.page_range %}
+            {% if p == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+            {% else %}
+              <li class="page-item"><a class="page-link" href="?page={{ p }}&q={{ q }}&status={{ status }}">{{ p }}</a></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}">»</a></li>
+          {% else %}<li class="page-item disabled"><span class="page-link">»</span></li>{% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div><!-- /.card-soft -->
+  </div>
+</div>
+{% endblock %}

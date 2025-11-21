@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  .auth-wrap{ padding-top: 2rem; padding-bottom: 3rem; }
+  .auth-title{
+    text-align:center; font-weight:900; margin-bottom:1rem;
+  }
+  .auth-sub{ text-align:center; color:var(--muted); margin-top:-.4rem; margin-bottom:1.2rem; }
+  .actions a{ text-decoration:none; }
+  .actions a:hover{ text-decoration:underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container container-narrow auth-wrap">
+
+  {% include "includes/_messages.html" %}
+
+  <div class="form-box">
+    <h2 class="auth-title">Log in</h2>
+    <div class="auth-sub">Welcome back to Glamup Nails ✨</div>
+
+    <form method="post" action="{% url 'main:login' %}" novalidate>
+      {% csrf_token %}
+      {# chuyển trang đúng sau login (nếu có tham số next) #}
+      {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+      {% elif next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      {# Hiển thị lỗi chung của form (nếu có) #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {# --- Input: username/email --- #}
+      <div class="mb-3">
+        <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">Email / Username</label>
+        <input
+          type="text"
+          name="{{ form.username.html_name }}"
+          id="{{ form.username.id_for_label }}"
+          class="form-control"
+          placeholder="you@example.com / username"
+          value="{{ form.username.value|default_if_none:'' }}"
+          required>
+        {% if form.username.errors %}
+          <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      {# --- Input: password --- #}
+      <div class="mb-2">
+        <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">Password</label>
+        <input
+          type="password"
+          name="{{ form.password.html_name }}"
+          id="{{ form.password.id_for_label }}"
+          class="form-control"
+          placeholder="••••••••"
+          required>
+        {% if form.password.errors %}
+          <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="remember_me">
+          <label class="form-check-label" for="remember_me">Remember me</label>
+        </div>
+        <a class="text-brand fw-bold" href="{% url 'main:password_reset' %}">Forgot password?</a>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-brand btn-lg">Log in</button>
+      </div>
+
+      <div class="actions d-flex justify-content-center gap-2 mt-3">
+        <span class="text-muted">Don’t have an account?</span>
+        <a class="fw-bold text-brand" href="{% url 'main:signup' %}">Sign up</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% comment %}
+Partial template: hiển thị sao (1–5)
+Biến đầu vào: rating (float/int)
+Ví dụ dùng:
+  {% include "includes/_rating_stars.html" with rating=4.5 %}
+{% endcomment %}
+
+{% load static %}
+
+<style>
+  .star {
+    color: #f5c518;     /* vàng chuẩn cho sao */
+    font-size: 1.1rem;
+  }
+  .star-muted {
+    color: #ccc;
+  }
+</style>
+
+{% with full_stars=rating|floatformat:1|floatdivide:1 %}
+  {% for i in "12345" %}
+    {% if rating >= forloop.counter %}
+      <i class="bi bi-star-fill star"></i>
+    {% elif rating >= forloop.counter0|add:0.5 %}
+      <i class="bi bi-star-half star"></i>
+    {% else %}
+      <i class="bi bi-star star-muted"></i>
+    {% endif %}
+  {% endfor %}
+{% endwith %}

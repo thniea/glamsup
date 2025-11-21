@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Services · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f;         /* olive nhạt */
+    --brand-strong:#8b9361;  /* olive đậm cho viền & nút */
+    --ink:#2b3220;
+    --edge:#d7ddc1;
+  }
+  .wrap{max-width:1200px;margin:24px auto 72px;padding:0 16px;color:var(--ink)}
+
+  /* Banner */
+  .hero{margin:0 0 18px;border:4px solid var(--brand);border-radius:16px;overflow:hidden;position:relative}
+  .hero img{width:100%;height:260px;object-fit:cover;display:block}
+  .hero-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.35) 100%);padding:12px 16px}
+  .hero-title{color:#fff;font-weight:900;font-size:clamp(20px,2.2vw,28px)}
+  .hero-desc{color:#fff;opacity:.95;font-weight:700;font-size:clamp(12px,1.5vw,14px)}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:22px}
+  @media (max-width:960px){ .layout{grid-template-columns:1fr} }
+
+  /* Sidebar */
+  .side{border:1px solid var(--edge);border-radius:14px;padding:16px;background:#fff}
+  .side h3{margin:4px 0 12px;font-weight:900}
+  .cat-btn{
+    width:100%;display:block;text-align:left;border:2px solid var(--brand-strong);background:#fff;color:var(--brand-strong);
+    border-radius:12px;padding:10px 14px;font-weight:900;margin-bottom:10px;cursor:pointer
+  }
+  .cat-btn.active,.cat-btn:hover{background:var(--brand-strong);color:#fff}
+
+  /* Controls */
+  .controls{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:14px}
+  @media (max-width:560px){ .controls{grid-template-columns:1fr} }
+  .search, select{
+    border:2px solid var(--brand-strong);border-radius:12px;padding:10px 14px;background:#fff
+  }
+
+  /* Grid + Card */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){ .grid{grid-template-columns:1fr} }
+
+  .card{border:3px solid var(--brand-strong);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.04)}
+  .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}         /* Ảnh vuông */
+  .body{padding:8px 12px}                                                     /* mô tả gọn */
+  .c-row{display:flex;justify-content:space-between;gap:10px;align-items:center} /* tránh đụng .row của footer */
+  .name{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+  .price{font-weight:900}
+  .c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  .stars{color:#f5b800;font-size:16px;letter-spacing:2px;line-height:1}
+
+  .btn-outline{
+    border:2px solid var(--brand-strong);background:#fff;color:#8b9361;
+    font-weight:900;border-radius:12px;padding:8px 14px;text-decoration:none;display:inline-block
+  }
+  .btn-outline:hover{background:#8b9361;color:#fff}
+
+  .hide{display:none !important}
+  .empty{padding:18px;border:2px dashed var(--brand-strong);border-radius:12px;background:#fff}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+
+  <!-- Banner -->
+  <section class="hero" aria-label="Services banner">
+    <img id="heroImg" src="{% static 'images/hero_spring.jpg' %}" alt="Glamup Nails Collection">
+    <div class="hero-overlay">
+      <div>
+        <div id="heroTitle" class="hero-title">All</div>
+        <div id="heroDesc" class="hero-desc">Browse all our latest services and collections.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="side" aria-label="Categories">
+      <h3>Category</h3>
+      <button type="button" class="cat-btn active" data-cat="all">All</button>
+      <button type="button" class="cat-btn" data-cat="manicure">Manicure</button>
+      <button type="button" class="cat-btn" data-cat="pedicure">Pedicure</button>
+      <button type="button" class="cat-btn" data-cat="more">More</button>
+    </aside>
+
+    <!-- Main -->
+    <section>
+      <div class="controls">
+        <input id="q" class="search" type="search" placeholder="Search services…" aria-label="Search services">
+        <select id="sort" aria-label="Sort by">
+          <option value="">Sort by: Default</option>
+          <option value="name_asc">Name (A → Z)</option>
+          <option value="name_desc">Name (Z → A)</option>
+          <option value="price_asc">Price (Low → High)</option>
+          <option value="price_desc">Price (High → Low)</option>
+        </select>
+      </div>
+
+      <div id="grid" class="grid">
+        {% for s in services %}
+          <article class="card"
+                   data-category="{{ s.category }}"
+                   data-name="{{ s.name }}"
+                   data-price="{{ s.price|floatformat:0 }}"
+                   data-slug="{{ s.slug }}">
+            <img class="thumb" src="{{ s.thumbnail_url }}" alt="{{ s.name }}">
+            <div class="body">
+              <div class="c-row">
+                <div class="name">{{ s.name }}</div>
+                <div class="price">{{ s.price|floatformat:0 }}₫</div>
+              </div>
+              <div class="c-foot">
+                {# ⭐ trung bình sao – chỉ cần Service có property avg_rating là ok #}
+                <div class="stars" aria-label="{{ s.avg_rating|default:0|floatformat:1 }} out of 5">
+                  {% with r=s.avg_rating|default:0 %}
+                    {% for _ in "12345"|make_list %}
+                      {% if forloop.counter <= r|floatformat:0 %}
+                        ★
+                      {% else %}
+                        ☆
+                      {% endif %}
+                    {% endfor %}
+                  {% endwith %}
+                </div>
+                <a class="btn-outline" href="{% url 'main:service_detail' s.slug %}">Book Now</a>
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="empty">No services available yet.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $  = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const normalize = s => (s||'').toString().toLowerCase().trim();
+
+  const grid     = $('#grid');
+  const catBtns  = $$('.cat-btn');
+  const sortSel  = $('#sort');
+  const searchEl = $('#q');
+
+  const heroImg   = $('#heroImg');
+  const heroTitle = $('#heroTitle');
+  const heroDesc  = $('#heroDesc');
+  const HERO_COMMON = "{% static 'images/hero_spring.jpg' %}";
+
+  const state = { cat:'all', sort:'', q:'' };   // mặc định ALL
+
+  function setHero(cat){
+    heroImg.src = HERO_COMMON;
+    const titleMap = {all:'All', manicure:'Manicure', pedicure:'Pedicure', more:'More'};
+    const descMap  = {
+      all: "Browse all our latest services and collections.",
+      manicure: "Discover our latest spring collection for perfect hands.",
+      pedicure: "Pamper your feet with our relaxing pedicure services.",
+      more: "Add-on care to complete your beauty routine."
+    };
+    heroTitle.textContent = titleMap[cat] || 'All';
+    heroDesc.textContent  = descMap[cat]  || descMap.all;
+  }
+
+  function render(){
+    const cards = $$('.card', grid);
+
+    // filter
+    cards.forEach(c => {
+      const okCat = (state.cat === 'all') ? true : (c.dataset.category === state.cat);
+      const okQ   = state.q ? normalize(c.dataset.name).includes(state.q) : true;
+      c.classList.toggle('hide', !(okCat && okQ));
+    });
+
+    // sort
+    const vis = cards.filter(c => !c.classList.contains('hide'));
+    const hid = cards.filter(c =>  c.classList.contains('hide'));
+    if (state.sort){
+      const [key, dir] = state.sort.split('_');
+      vis.sort((a,b)=>{
+        if(key==='price'){
+          const pa = +(a.dataset.price||0), pb = +(b.dataset.price||0);
+          return dir==='asc' ? pa-pb : pb-pa;
+        }else{
+          const na=(a.dataset.name||'').toLowerCase(), nb=(b.dataset.name||'').toLowerCase();
+          if(na<nb) return dir==='asc'?-1:1;
+          if(na>nb) return dir==='asc'? 1:-1;
+          return 0;
+        }
+      });
+    }
+    vis.forEach(c => grid.appendChild(c));
+    hid.forEach(c => grid.appendChild(c));
+
+    setHero(state.cat);
+  }
+
+  // events
+  catBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      catBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.cat = btn.dataset.cat;
+      location.hash = '#'+state.cat;
+      render();
+    });
+  });
+
+  sortSel.addEventListener('change', e => { state.sort = e.target.value||''; render(); });
+  searchEl.addEventListener('input', e => { state.q = normalize(e.target.value); render(); });
+
+  // init
+  (function init(){
+    if (location.hash){
+      const cat = location.hash.slice(1);
+      const match = catBtns.find(b => b.dataset.cat===cat);
+      if (match) match.click(); else render();
+    } else {
+      render(); // default 'all'
+    }
+  })();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,236 @@
+/* =========================
+   Glamup Nails — Global Style System
+   ========================= */
+
+/* ---------- Design tokens ---------- */
+:root{
+  --bg: #fffbf5;         /* nền chính */
+  --surface: #fffef9;    /* nền thẻ/card */
+  --brand: #a5aa7f;      /* màu thương hiệu */
+  --ink: #1e2417;        /* chữ chính */
+  --muted: #6b705c;      /* chữ phụ */
+  --edge: #cfd3a9;       /* viền nhẹ */
+  --radius: 14px;        /* bo góc mặc định */
+  --shadow: 0 6px 18px rgba(40, 50, 20, .06);
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+  /* Nền khi hover: Màu xanh lá nhạt */
+  background-color: #b4ba8f !important;
+  /* Chữ khi hover: Màu trắng (để tăng độ tương phản) */
+  color: #fff !important;
+}
+
+/* Áp dụng cho các mục trong dropdown khi nhấn giữ (active/clicked) */
+.dropdown-item:active {
+  /* Nền khi active: Màu xanh lá đậm hơn */
+  background-color: #b4ba8f !important;
+  /* Chữ khi active: Màu trắng */
+  color: #fff !important;
+/* ---------- Base ---------- */
+html, body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a{
+  color: var(--brand);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+a:hover{ text-decoration: underline; color: #8f936d; }
+
+h1,h2,h3,h4,h5,h6{
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: .25px;
+  margin-bottom: .6rem;
+}
+.text-muted{ color: var(--muted)!important; }
+
+.container-narrow{ max-width: 960px; }
+
+/* ---------- Navbar & Footer ---------- */
+.navbar-branding{
+  background: #e1e6cf;
+  border-bottom: 2px solid var(--edge);
+  box-shadow: var(--shadow);
+}
+.navbar-branding .nav-link{
+  font-weight: 700;
+  color: var(--ink);
+}
+.navbar-branding .nav-link:hover{
+  color: var(--brand);
+}
+footer{
+  background: #e1e6cf;
+  border-top: 2px solid var(--edge);
+  padding: 1.5rem 0;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* ---------- Buttons ---------- */
+.btn-brand{
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  padding: .55rem 1.2rem;
+  box-shadow: var(--shadow);
+  transition: all .2s ease;
+}
+.btn-brand:hover{
+  filter: brightness(.95);
+  color: #fff;
+}
+
+.btn-outline-brand{
+  background: transparent;
+  color: var(--brand);
+  border: 2px solid var(--brand);
+  border-radius: 999px;
+  padding: .5rem 1rem;
+  font-weight: 800;
+  transition: all .2s ease;
+}
+.btn-outline-brand:hover{
+  background: var(--brand);
+  color: #fff;
+}
+
+.btn-soft{
+  background: #eef1dd;
+  color: var(--ink);
+  border: 1.5px solid var(--edge);
+  border-radius: 999px;
+  padding: .5rem 1rem;
+  font-weight: 800;
+}
+
+.btn-sm{ padding: .35rem .8rem; font-size: .95rem; }
+.btn-lg{ padding: .7rem 1.4rem; font-size: 1.05rem; }
+
+/* ---------- Forms ---------- */
+.form-control,
+.form-select,
+textarea{
+  background: #fff;
+  border: 2px solid var(--edge);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.form-control:focus,
+.form-select:focus,
+textarea:focus{
+  border-color: var(--brand);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(165,170,127,.18);
+}
+.form-check-input{
+  border: 2px solid var(--edge);
+}
+.form-check-input:checked{
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+label{
+  font-weight: 700;
+  margin-bottom: .25rem;
+  color: var(--ink);
+}
+
+/* ---------- Cards & Layout ---------- */
+.card-soft{
+  background: var(--surface);
+  border: 2px solid var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+.section-title{
+  font-weight: 900;
+  font-size: 1.25rem;
+  margin-bottom: .6rem;
+}
+.shadow-soft{ box-shadow: var(--shadow)!important; }
+.rounded-xl{ border-radius: var(--radius)!important; }
+.border-soft{ border: 2px solid var(--edge)!important; }
+.bg-surface{ background: var(--surface)!important; }
+.text-olive{ color: #2b3220!important; }
+
+/* ---------- Tables (admin pages) ---------- */
+.table-soft{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid var(--edge);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.table-soft th,
+.table-soft td{
+  padding: .75rem .9rem;
+  border-bottom: 1.5px solid var(--edge);
+}
+.table-soft thead th{
+  background: #f4f3e7;
+  font-weight: 800;
+  color: var(--ink);
+}
+.table-soft tr:last-child td{
+  border-bottom: none;
+}
+
+/* ---------- Badges ---------- */
+.badge-brand{
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  padding: .15rem .55rem;
+  font-weight: 800;
+  font-size: .85rem;
+}
+.badge-soft{
+  background: #eef1dd;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: .15rem .55rem;
+  font-weight: 800;
+  font-size: .85rem;
+}
+
+/* ---------- Utilities ---------- */
+.mt-section{ margin-top: 2.5rem; }
+.mb-section{ margin-bottom: 2.5rem; }
+.text-brand{ color: var(--brand)!important; }
+.text-muted-light{ color: #a3a39c!important; }
+
+/* ---------- Rating stars ---------- */
+.star{ color: #f1c40f; font-size: 1.1rem; }
+.star-muted{ color: #c7c7c7; font-size: 1.1rem; }
+
+/* ---------- Form container (uniform across templates) ---------- */
+.form-box{
+  background: var(--surface);
+  border: 2px solid var(--edge);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 991px){
+  .btn-lg{ font-size: 1rem; }
+  .card-soft{ padding: 1rem; }
+  h1,h2,h3{ font-size: 1.3rem; }
+}

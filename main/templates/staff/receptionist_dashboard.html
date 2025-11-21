@@ -1,0 +1,124 @@
+{% extends 'base_staff.html' %}
+{% load static %}
+
+{% block title %}Receptionist Dashboard · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .card{ border:2px solid #cfd3a9; border-radius:12px; }
+  .appt-time { font-size:1.5rem; font-weight:700; color:var(--brand); }
+  .chip { display:inline-block; padding:.2rem .6rem; border-radius:999px; font-size:.75rem; font-weight:700; }
+  .chip-pending { background-color:#ffeb3b; color:#333; }
+  .chip-confirmed { background-color:#c8e6c9; color:#388e3c; }
+  .chip-arrived { background-color:#2196f3; color:#fff; }
+  .chip-ongoing { background-color:#ff9800; color:#fff; }
+  .chip-done { background-color:#4caf50; color:#fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_staff.html' with active='dashboard' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <h1 class="h4 mb-4 text-center">BẢNG ĐIỀU KHIỂN LỄ TÂN</h1>
+
+    {% include "includes/_messages.html" %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 mb-0">Lịch hẹn hôm nay ({{ today|date:"d/m/Y" }})</h2>
+      <a href="{% url 'main:receptionist_appointments' %}" class="btn btn-sm btn-outline-dark">
+  <i class="bi bi-list-task me-1"></i> Xem tất cả lịch hẹn
+</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card p-3 bg-light">
+          <p class="text-muted mb-1 small">Lịch hẹn cần theo dõi</p>
+          <p class="h3 fw-bold text-danger">{{ appointments|length }}</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 bg-light">
+          <p class="text-muted mb-1 small">Thêm khách hàng mới</p>
+          <a href="#" class="btn btn-sm btn-outline-success w-100">
+            <i class="bi bi-person-plus"></i> Tạo hồ sơ
+          </a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 bg-light">
+          <p class="text-muted mb-1 small">Tạo lịch hẹn tại chỗ</p>
+          <a href="{% url 'main:book' %}" class="btn btn-sm btn-outline-primary w-100">
+            <i class="bi bi-calendar-plus"></i> Đặt lịch nhanh
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        {% if appointments %}
+          <div class="list-group list-group-flush">
+            {% for appt in appointments %}
+            <div class="list-group-item d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <div class="me-3 text-center">
+                  <div class="appt-time">{{ appt.appointment_time|time:"H:i" }}</div>
+                  <div class="small text-muted">{{ appt.branch.name }}</div>
+                </div>
+
+                <div>
+                  <p class="mb-0 fw-bold">
+                    {{ appt.customer.full_name|default:appt.customer.username }}
+                  </p>
+                  <p class="mb-0 small text-muted">Dịch vụ: {{ appt.service_name }}</p>
+                  <p class="mb-0 small text-muted">
+                    Kỹ thuật: {{ appt.staff_assigned.full_name|default:"Chưa gán" }}
+                  </p>
+                  <p class="mb-0 small text-muted">Mã: {{ appt.code }}</p>
+                </div>
+              </div>
+
+              <div class="text-end">
+                {% if appt.status == 'PENDING' %}
+                  <span class="chip chip-pending">Chờ xác nhận</span>
+                {% elif appt.status == 'CONFIRMED' %}
+                  <span class="chip chip-confirmed">Đã xác nhận</span>
+                {% elif appt.status == 'ARRIVED' %}
+                  <span class="chip chip-arrived">Đã đến</span>
+                {% elif appt.status == 'ONGOING' %}
+                  <span class="chip chip-ongoing">Đang làm</span>
+                {% elif appt.status == 'DONE' %}
+                  <span class="chip chip-done">Hoàn thành</span>
+                {% endif %}
+
+                <div class="mt-2 d-grid gap-1">
+                  {% if appt.status == 'CONFIRMED' or appt.status == 'PENDING' %}
+                    <a href="{% url 'main:check_in' appt.id %}" class="btn btn-sm btn-success">Check-in</a>
+                  {% elif appt.status == 'ARRIVED' or appt.status == 'ONGOING' %}
+                    <a href="{% url 'main:check_out' appt.id %}" class="btn btn-sm btn-warning">Check-out</a>
+                  {% else %}
+                    <button class="btn btn-sm btn-outline-dark" disabled>—</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-emoji-smile fs-3"></i>
+            <p class="mb-0">Không có lịch hẹn nào cần theo dõi hôm nay.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

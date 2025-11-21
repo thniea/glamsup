@@ -1,0 +1,47 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}Branch detail · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; }
+  .card{border-color:var(--brand)}
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:8px 14px}
+  .kv .k{font-weight:900}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar Staff -->
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' %}
+  </div>
+
+  <!-- Khu vực nội dung trang con -->
+  <div class="col-lg-9 col-md-8">
+    {% block main %}<div class="container-fluid px-0 px-md-2">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="fw-bold m-0">BRANCH DETAIL</h3>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-success" href="{% url 'main:branch_update' branch.pk %}">Edit</a>
+      <a class="btn btn-outline-secondary" href="{% url 'main:branch_list' %}">Back</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="kv">
+        <div class="k">Name</div><div>{{ branch.name }}</div>
+        <div class="k">Address</div><div>{{ branch.address }}</div>
+        <div class="k">Phone</div><div>{{ branch.phone }}</div>
+        <div class="k">ID</div><div>#{{ branch.id }}</div>
+      </div>
+    </div>
+  </div>
+</div>{% endblock %}
+  </div>
+</div>
+{% endblock %}

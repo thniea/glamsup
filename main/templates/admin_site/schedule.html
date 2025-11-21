@@ -1,0 +1,99 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Schedule management · Admin · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220; }
+  body{ background:var(--bg); }
+  .schedule-table thead th{ background:var(--brand); color:#111; text-align:center; }
+  .schedule-table th, .schedule-table td{ border-color:#cfd3a9 !important; vertical-align:middle; text-align:center }
+  .cell-branch{ display:block; font-weight:700; }
+  .muted{ color:#9aa3a3 }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='schedule' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 m-0 fw-bold">SCHEDULE MANAGEMENT</h2>
+
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-dark btn-sm" href="?start={{ prev_start }}">&laquo; Prev week</a>
+        <span class="badge rounded-pill px-3 py-2 bg-light text-dark">
+          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
+          <i class="bi bi-calendar-week ms-2"></i>
+        </span>
+        <a class="btn btn-outline-dark btn-sm" href="?start={{ next_start }}">Next week &raquo;</a>
+
+        <a class="btn btn-outline-dark d-flex align-items-center"
+           href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}">
+          <span class="me-2">Approve next-week schedule</span>
+          <i class="bi bi-pencil-square"></i>
+          {% if pending|add:0 > 0 %}
+            <span class="badge text-bg-danger ms-2">{{ pending }}</span>
+          {% endif %}
+        </a>
+      </div>
+    </div>
+
+    {% include "includes/_messages.html" %}
+
+    <div class="card border-2">
+      <div class="card-header bg-transparent text-center fw-semibold">
+        {{ week_start|date:"F Y" }}
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered m-0 schedule-table">
+            <thead>
+              <tr>
+                <th style="width:220px;">Shift</th>
+                {% for d in days %}
+                  <th>
+                    <div class="fw-semibold">{{ d|date:"D" }}</div>
+                    <div class="small text-muted">{{ d|date:"d/m" }}</div>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grid_rows %}
+                <tr>
+                  <th class="text-start ps-3">{{ row.label }}</th>
+                  {% for c in row.cols %}
+                    <td>
+                      {% if c.entries %}
+                        {# Có nhiều nhân viên cùng ca/ngày: liệt kê mỗi dòng một người kèm branch #}
+                        {% for item in c.entries %}
+                          <div class="tiny fw-semibold">
+                            On
+                            {% if item.branch %}
+                              <span class="small text-muted">— {{ item.branch }}</span>
+                            {% endif %}
+                            <div class="small text-muted">{{ item.staff }}</div>
+                          </div>
+                        {% endfor %}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

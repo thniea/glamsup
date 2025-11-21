@@ -1,0 +1,55 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}Reply Feedback · GlamUp Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --olive:#2b3220; }
+  body{ background:var(--bg);font-family:'Nunito',sans-serif; }
+  .fb-card{ background:#fdfcf6; border:2px solid #a3a88b; border-radius:12px; padding:1rem; }
+  .fb-avatar{ width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='feedback' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <h3 class="text-center fw-bold mb-3">REPLY FEEDBACK</h3>
+
+    <div class="fb-card mb-3">
+      <div class="d-flex gap-2 mb-2">
+        <img src="{{ review.customer.avatar_url }}" class="fb-avatar" alt="">
+        <div>
+          <div class="fw-bold">
+            {{ review.customer.full_name|default:review.customer.username }}
+          </div>
+          <div class="small text-muted">
+            {{ review.review_date|date:"Y-m-d" }} · {{ review.service.service_name }}
+          </div>
+        </div>
+      </div>
+      <div class="mb-2">
+        {{ review.comment }}
+      </div>
+      {% if review.image %}
+        <img src="{{ review.image.url }}" style="max-width:160px;border-radius:8px;border:2px solid #c9cda9;">
+      {% endif %}
+    </div>
+
+    <form method="post" class="card p-3">
+      {% csrf_token %}
+      <div class="mb-2 fw-bold">Admin reply</div>
+      <textarea name="admin_reply" rows="4" class="form-control">{{ review.admin_reply }}</textarea>
+      <div class="text-end mt-3">
+        <a href="{% url 'main:admin_feedback' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+        <button type="submit" class="btn btn-success">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

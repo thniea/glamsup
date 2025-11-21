@@ -1,0 +1,238 @@
+{% extends "base_staff.html" %}
+{% load static %}
+
+{% block title %}Staff · Account Overview{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220;
+    --btn:#7e8658;          /* màu nút đậm hơn */
+    --btn-hover:#6b724b;    /* hover đậm */
+  }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+
+  .card-soft{ border:2px solid #cfd3a9; border-radius:16px; background:#fff; overflow:hidden; }
+  /* header của mỗi card: dùng flex để đặt nút bên phải */
+  .sec-title{
+    background:#cfd3a9; color:#1d1e1a; font-weight:900;
+    padding:.6rem 1rem; display:flex; align-items:center; justify-content:space-between;
+  }
+  .sec-title h6{ margin:0; font-weight:900; letter-spacing:.3px; }
+  .btn-edit{
+    background:var(--btn); color:#fff; font-weight:800;
+    border:2px solid rgba(0,0,0,.08); border-radius:10px;
+    padding:.45rem .9rem; line-height:1;
+    margin-top:2px;
+  }
+  .btn-edit:hover{ background:var(--btn-hover); color:#fff; }
+  .btn-plain{ background:#fff; color:#1d1e1a; border:2px solid #9faa78; }
+  .btn-plain:hover{ background:#f3f5ea; }
+
+  .kv{ display:flex; gap:1rem; padding:.6rem 1rem; }
+  .kv .k{ width:180px; color:#6b6f63; font-weight:800; }
+  .kv .v{ color:#15160f; font-weight:700; }
+
+  .upcoming .item{
+    background:#f8f9f2; border:2px solid #e0e3cf; border-radius:12px;
+    padding:.6rem .8rem; font-weight:700;
+  }
+
+  /* Avatar */
+  .avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; border:2px solid #a5aa7f; }
+  .avatar-wrap{ position:relative; display:inline-block; }
+  .btn-change-avatar{
+    position:absolute; bottom:-6px; right:-6px;
+    background:var(--btn); color:#fff; border:none; border-radius:999px;
+    padding:.25rem .5rem; font-size:.8rem; line-height:1;
+  }
+  .btn-change-avatar:hover{ background:var(--btn-hover); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Sidebar -->
+  <div class="col-lg-3 col-md-4">
+    {% include "includes/_sidebar_staff.html" with active="account" %}
+  </div>
+
+  <!-- Main -->
+  <div class="col-lg-9 col-md-8">
+
+    <!-- Header (avatar + name) -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="avatar-wrap">
+        <img class="avatar" src="{{ staff.avatar_url|default:'/static/img/avatar-placeholder.png' }}" alt="Avatar">
+        <form method="post" enctype="multipart/form-data" action="">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="upload_avatar">
+          <input type="file" id="fileAvatar" name="avatar" accept="image/*" class="visually-hidden" onchange="this.form.submit()">
+          <label for="fileAvatar" class="btn-change-avatar" title="Đổi ảnh">✎</label>
+        </form>
+      </div>
+      <div>
+        <div class="fw-black fs-5" style="letter-spacing:.3px;">
+          {{ staff.display_name|default:request.user.full_name|default:request.user.username }}
+        </div>
+        <div class="text-muted small">Staff</div>
+      </div>
+    </div>
+
+    {% include "includes/_messages.html" %}
+
+    <!-- Account information -->
+    <div class="card-soft mb-3">
+      <div class="sec-title">
+        <h6>Account information</h6>
+        <div class="d-flex gap-2">
+          <button class="btn btn-plain btn-sm" data-bs-toggle="modal" data-bs-target="#changePwdModal">
+            Change password
+          </button>
+          <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editAccountModal">
+            Edit Information
+          </button>
+        </div>
+      </div>
+      <div class="kv"><div class="k">Account name</div><div class="v">
+        {{ staff.full_name|default:request.user.full_name|default:request.user.username }}
+      </div></div>
+      <div class="kv"><div class="k">Password</div><div class="v">********</div></div>
+      <div class="kv"><div class="k">Email</div><div class="v">
+        {{ staff.email|default:request.user.email|default:"—" }}
+      </div></div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="card-soft mb-3 upcoming">
+      <div class="sec-title"><h6>Upcoming Appointments</h6></div>
+      <div class="p-3">
+        {% if upcoming and upcoming|length %}
+          {% for ap in upcoming %}
+            <div class="item mb-2">
+              {{ ap.service_name }} — {{ ap.date_display }} — At {{ ap.branch_name }}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted">No upcoming appointments.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="card-soft mb-4">
+      <div class="sec-title">
+        <h6>Personal Information</h6>
+        <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editPersonalModal">
+          Edit Information
+        </button>
+      </div>
+      <div class="kv"><div class="k">Full name</div><div class="v">{{ staff.full_name|default:"—" }}</div></div>
+      <div class="kv"><div class="k">Email</div><div class="v">{{ staff.email|default:"—" }}</div></div>
+      <div class="kv"><div class="k">Phone number</div><div class="v">{{ staff.phone|default:"—" }}</div></div>
+      <div class="kv"><div class="k">Address</div><div class="v">{{ staff.address|default:"—" }}</div></div>
+      <div class="kv"><div class="k">Date of birth</div><div class="v">
+        {% if staff.dob %}{{ staff.dob|date:"d/m/Y" }}{% else %}—{% endif %}
+      </div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= Modals ================= -->
+
+<!-- 1) Edit account -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_account">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit account</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Full name</label>
+          <input name="full_name" class="form-control" value="{{ request.user.full_name }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email</label>
+          <input type="email" name="email" class="form-control" value="{{ request.user.email }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-edit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2) Edit personal information -->
+<div class="modal fade" id="editPersonalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_personal">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit personal information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Phone number</label>
+          <input name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Address</label>
+          <input name="address" class="form-control" value="{{ request.user.address }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Date of birth</label>
+          <input type="date" name="date_of_birth" class="form-control"
+                 value="{{ staff.dob|date:'Y-m-d' }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-edit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3) Change password -->
+<div class="modal fade" id="changePwdModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="change_password">
+      <div class="modal-header">
+        <h5 class="modal-title">Change password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Current password</label>
+          <input type="password" name="old_password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">New password</label>
+          <input type="password" name="new_password1" class="form-control" required>
+          <div class="form-text">Mật khẩu đủ mạnh (tối thiểu 8 ký tự, khó đoán…).</div>
+        </div>
+        <div>
+          <label class="form-label fw-semibold">Confirm new password</label>
+          <input type="password" name="new_password2" class="form-control" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-edit">Update password</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f;
+    --bg:#fffbf5;
+    --olive:#2b3220;
+    --sage:#b7c099;
+  }
+
+
+  /* ========== HERO ========== */
+  .hero{ padding:45px 0 24px; }
+
+  .hero-title{
+    font-size:clamp(100px,12vw,84px);
+    font-weight:1000;
+    line-height:1;
+    color:var(--olive);
+  }
+  .hero-contact li{ margin:.25rem 0; }
+
+
+  .hero-right{
+    display:flex;
+    justify-content:center;      /* căn giữa cụm ảnh trong cột */
+    align-items:flex-start;
+  }
+  .hero-right .grid{
+    display:grid;
+    gap:10px;
+    grid-template-columns: 1fr 1fr;
+    max-width: 540px;
+  }
+  .hero-right .cell{
+    overflow:hidden;
+    border-radius:12px;
+  }
+  .hero-right img{
+    width:100%;
+    aspect-ratio: 4 / 3;            /* ảnh thấp hơn, gọn hơn */
+    object-fit:cover;
+    border-radius:12px;
+    display:block;
+    transition:transform .25s ease;
+  }
+  .hero-right img:hover{ transform:scale(1.03); }
+
+  /* Promo bar */
+  .promo-bar{
+    background:var(--brand);
+    color:#fff;
+    border-radius:10px;
+    padding:12px 18px;
+    display:flex; align-items:center; gap:12px;
+    margin:22px 0 10px;
+    font-weight:800;
+    letter-spacing:.3px;
+    justify-content:center
+  }
+  .promo-badge{
+    background:#f6c66a;
+    color:#6b3a00;
+    font-weight:900;
+    border-radius:8px;
+    padding:6px 12px;
+  }
+
+  /* Section title */
+  .sec-title{
+    font-weight:900;
+    text-align:center;
+    letter-spacing:.05em;
+    color:var(--olive);
+    margin:30px 0 16px;
+  }
+
+  /* ========== HOT SERVICES ========== */
+  .hot-card{
+    background:#fff;
+    border-radius:16px;
+    overflow:hidden;
+    text-align:center;
+    box-shadow:0 2px 5px rgba(0,0,0,.06);
+    padding-bottom:12px;
+  }
+  .hot-card img{ width:100%; height:auto; display:block; aspect-ratio:4/3; object-fit:cover; }
+  .hot-card .name{ font-weight:800; margin-top:10px; color:var(--olive); }
+  .btn-olive{
+    background:var(--brand);
+    color:#fff;
+    font-weight:800;
+    border:none;
+    border-radius:8px;
+    padding:8px 16px;
+  }
+  .btn-olive:hover{ filter:brightness(.9); }
+
+  /* ========== COLLECTION ========== */
+  .collection-band{
+    background:var(--sage);
+    border-radius:20px;
+    padding:18px;
+  }
+  .collection-inner{
+    background:#fff;
+    border-radius:16px;
+    padding:14px;
+  }
+  .collection-grid{
+    display:grid; gap:10px;
+    grid-template-columns:repeat(4,1fr);
+  }
+  .collection-grid img{
+    width:100%; aspect-ratio:1/1;
+    object-fit:cover; border-radius:10px;
+  }
+/* Collection items */
+.c-item{ position:relative; display:block; }
+.c-item .badge-price{
+  position:absolute; right:8px; bottom:8px;
+  background:var(--brand); color:#fff; font-weight:900;
+  border-radius:10px; padding:4px 8px; font-size:.9rem;
+}
+.c-item img{ transition:transform .2s ease; }
+.c-item:hover img{ transform:scale(1.02); }
+
+  /* ========== ABOUT ========== */
+  .about-hero img{
+    width:100%; height:360px;
+    object-fit:cover;
+    border-radius:20px;
+  }
+  .about-title{ font-weight:900; color:var(--olive); }
+
+  /* ========== REVIEWS ========== */
+  .reviews-title{ font-weight:900; color:var(--olive); }
+  .review-card{
+    border-top:1px solid rgba(0,0,0,.15);
+    padding:14px 0;
+  }
+  .stars{ color:#f6b700; font-size:18px; }
+  .customer{ display:flex; align-items:center; gap:10px; }
+  .avatar{
+    width:48px; height:48px;
+    border-radius:50%; object-fit:cover;
+  }
+
+  @media(max-width:992px){
+    .collection-grid{ grid-template-columns:repeat(3,1fr); }
+  }
+  @media(max-width:768px){
+    .collection-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+/* ===== Panels (khung nền xanh) ===== */
+.panel-band{
+  background:#e9efdc;                 /* xanh nhạt */
+  border:1.5px solid var(--brand);    /* viền olive */
+  border-radius:20px;
+  padding:18px;
+}
+.panel-inner{
+  background:#fff;
+  border-radius:16px;
+  padding:16px;
+}
+
+/* About */
+.about-hero img{
+  width:100%; height:420px;
+  object-fit:cover; border-radius:16px;
+}
+.about-title{ font-weight:900; color:var(--olive); }
+
+/* Reviews (cột trái có nền xanh) */
+.rev-left{
+  background:#e9efdc;
+  border:1.5px solid var(--brand);
+  border-radius:20px;
+  padding:16px;
+}
+.rev-left .img-wrap{
+  border-radius:14px; overflow:hidden; background:#fff;
+  border:1px solid rgba(0,0,0,.06);
+}
+.rev-left .img-wrap img{ width:100%; height:auto; display:block; }
+.reviews-title{ font-weight:900; color:var(--olive); }
+
+/* Card review và sao */
+.review-card{ border-top:1px solid rgba(0,0,0,.12); padding:14px 0; }
+.stars{ color:#f6b700; font-size:18px; letter-spacing:1px; }
+.customer{ display:flex; align-items:center; gap:10px; }
+.avatar{ width:48px; height:48px; border-radius:50%; object-fit:cover; }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="row g-4 align-items-start">
+      <!-- ✅ chỉnh tỷ lệ cột để chữ rộng hơn, ảnh gọn hơn -->
+      <div class="col-lg-7">
+        <div class="hero-title mb-3">Glamup<br>Nails</div>
+        <hr class="mb-3" style="opacity:.3; max-width:260px;">
+        <ul class="list-unstyled hero-contact mb-0">
+          <li>📞 0896-210-570</li>
+          <li>📍 02 Nguyen Van Thoai</li>
+          <li>📍 97 Ngo Van So</li>
+          <li>📍 25 Le Van Hien</li>
+        </ul>
+      </div>
+
+      <div class="col-lg-5 hero-right">
+        <div class="grid">
+          <div class="cell"><img src="{% static 'img/space-1.jpg' %}" alt=""></div>
+          <div class="cell"><img src="{% static 'img/hand-1.jpg' %}" alt=""></div>
+          <div class="cell"><img src="{% static 'img/hand-3.jpg' %}" alt=""></div>
+          <div class="cell"><img src="{% static 'img/space-2.jpg' %}" alt=""></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- promo bar (giữ nguyên) -->
+    <div class="promo-bar mt-4">
+      <div class="promo-badge">PROMOTION</div>
+      <div>September Promotion — 20% Off Gel Nail Services</div>
+    </div>
+  </section>
+
+  <!-- HOT SERVICES (động từ DB) -->
+<section class="hot-services my-4">
+  <h2 class="sec-title">HOT SERVICES</h2>
+
+  {% if featured_services %}
+    <div class="row g-4">
+      {% for s in featured_services %}
+        <div class="col-lg-4 col-md-6">
+          <div class="hot-card">
+            <a href="{% url 'main:service_detail' s.slug %}">
+              <img src="{{ s.thumbnail_url }}" alt="{{ s.name }}">
+            </a>
+            <div class="name">{{ s.name }}</div>
+            <div class="small text-muted">
+                {{ s.price|floatformat:0 }}₫
+              {% if s.avg_rating and s.avg_rating > 0 %} · ★ {{ s.avg_rating }}{% endif %}
+            </div>
+            <div class="mt-2 d-flex justify-content-center gap-2">
+              <a href="{% url 'main:service_detail' s.slug %}" class="btn btn-olive">View details</a>
+              <a href="{% url 'main:book' %}?service={{ s.slug }}" class="btn btn-olive">Book now</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center text-muted">Chưa có dịch vụ hoạt động.</div>
+  {% endif %}
+</section>
+
+  <!-- COLLECTION (giữ nguyên) -->
+  <section class="collection my-5">
+      <h2 class="sec-title">OUR COLLECTION</h2>
+      <div class="collection-band">
+        <div class="collection-inner">
+          {% if collection %}
+            <div class="collection-grid">
+              {% for item in collection %}
+                <a class="c-item" href="{% url 'main:service_detail' item.slug %}">
+                  <img src="{{ item.img }}" alt="{{ item.name }}">
+                  <span class="badge-price">{{ item.price|floatformat:0 }}₫</span>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">Chưa có sản phẩm trong bộ sưu tập.</div>
+          {% endif %}
+        </div>
+      </div>
+  </section>
+
+  <!-- ABOUT (giữ nguyên) -->
+<section class="about my-5">
+  <div class="panel-band">
+    <div class="panel-inner">
+      <div class="about-hero mb-3">
+        <img src="{% static 'img/about-hero.jpg' %}" alt="">
+      </div>
+
+      <h3 class="about-title mb-3">About Us</h3>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h5 class="fw-bold">Our vision</h5>
+          <hr class="my-2" style="opacity:.25; max-width:220px;">
+          <p>To become a leading nail destination that redefines beauty and self-care — where every woman feels confident, elegant, and uniquely herself through the art of nails.</p>
+        </div>
+        <div class="col-md-6">
+          <h5 class="fw-bold">Our mission</h5>
+          <hr class="my-2" style="opacity:.25; max-width:220px;">
+          <p>We are committed to delivering high-quality nail services with creativity, care, and precision. Our mission is to create a relaxing space where beauty meets comfort — bringing not just beautiful nails, but also confidence and happiness to every customer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- REVIEWS -->
+<section class="reviews my-5">
+  <div class="row g-4 align-items-start">
+    <!-- Cột trái có khung nền xanh + ảnh -->
+    <div class="col-lg-5">
+      <div class="rev-left">
+        <h3 class="reviews-title mb-3">Customer Reviews</h3>
+        <div class="img-wrap">
+          <img src="{% static 'img/review-left.jpg' %}" alt="">
+        </div>
+      </div>
+    </div>
+
+    <!-- Cột phải: danh sách review có gạch phân cách -->
+    <div class="col-lg-7">
+      {% for c in "123" %}
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="mb-2 small text-muted">“Excellent experience! Professional service and a very relaxing atmosphere.”</p>
+        <div class="customer">
+          <img src="{% static 'img/home/av-' %}{{ forloop.counter }}.jpg" class="avatar" alt="">
+          <strong>Customer {{ forloop.counter }}</strong>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+</div>
+{% endblock %}

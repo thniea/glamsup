@@ -1,0 +1,162 @@
+{# templates/includes/_footer.html #}
+{% load static %}
+
+<footer class="footer-branding mt-4">
+  <div class="container py-3">
+
+    <!-- ===== Hàng trên: Logo · Contact (đỏ) · Social ===== -->
+    <div class="ft-top">
+      <!-- Logo -->
+      <a href="{% url 'main:home' %}" class="ft-logo" aria-label="Glamup Nails">
+        <img src="{% static 'img/logo.png' %}" alt="Glamup Nails">
+      </a>
+
+      <!-- Hotline + Email -->
+      <div class="ft-contact-wrap">
+        <a class="contact-card-red" href="tel:0901234567" aria-label="Gọi hotline">
+          <span class="icon-box"><i class="bi bi-telephone"></i></span>
+          <div class="info">
+            <div class="label">Hotline</div>
+            <div class="value">0901 234 567</div>
+          </div>
+        </a>
+
+        <a class="contact-card-red" href="mailto:hello@glamupnails.vn" aria-label="Gửi email">
+          <span class="icon-box"><i class="bi bi-envelope"></i></span>
+          <div class="info">
+            <div class="label">Email</div>
+            <div class="value">hello@glamupnails.vn</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Social -->
+      <div class="ft-social">
+        <a href="#" aria-label="Facebook" class="ft-social-ic"><i class="bi bi-facebook"></i></a>
+        <a href="#" aria-label="Instagram" class="ft-social-ic"><i class="bi bi-instagram"></i></a>
+        <a href="#" aria-label="TikTok" class="ft-social-ic"><i class="bi bi-tiktok"></i></a>
+        <a href="#" aria-label="YouTube" class="ft-social-ic"><i class="bi bi-youtube"></i></a>
+      </div>
+    </div>
+
+    <hr class="ft-sep">
+
+    <!-- ===== Hàng dưới: Quick links · Địa chỉ · ĐK Email ===== -->
+    <div class="row g-4">
+      <!-- Quick links -->
+      <div class="col-6 col-lg-4">
+        <h6 class="ft-head">Quick links</h6>
+        <ul class="list-unstyled ft-links">
+          <li><a href="{% url 'main:home' %}">Home</a></li>
+          <li><a href="{% url 'main:book' %}">Booking</a></li>
+          <li><a href="{% url 'main:services' %}">Services</a></li>
+          <li><a href="#">About us</a></li>
+          <li><a href="{% url 'main:login' %}">Log in</a></li>
+        </ul>
+      </div>
+
+      <!-- Địa chỉ -->
+      <div class="col-6 col-lg-4">
+        <h6 class="ft-head">Địa chỉ</h6>
+        <ul class="list-unstyled ft-contact">
+          <li><i class="bi bi-geo-alt me-2"></i> 02 Nguyen Van Thoai</li>
+          <li><i class="bi bi-geo-alt me-2"></i> 97 Ngo Van So</li>
+          <li><i class="bi bi-geo-alt me-2"></i> 25 Le Van Hien</li>
+          <li class="mt-1"><i class="bi bi-clock me-2"></i> Mon – Sun: 9:00 – 21:00</li>
+        </ul>
+      </div>
+
+      <!-- Đăng ký email khuyến mãi -->
+      <div class="col-12 col-lg-4">
+        <div class="promo-card">
+          <img class="promo-img" src="{% static 'img/promo.jpg' %}" alt="Khuyến mãi"
+               onerror="this.style.display='none'">
+          <div class="promo-body">
+            <div class="promo-title">NHẬN MÃ GIẢM 10%</div>
+            <div class="promo-sub">Đăng ký email để nhận mã giảm tối đa 20k (khách mới)</div>
+            <form class="promo-form" method="post" action="#">
+              {% csrf_token %}
+              <input type="email" name="email" required placeholder="Email của bạn" class="form-control promo-input">
+              <button class="btn btn-outline-dark promo-btn" type="submit">Lấy mã</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center small mt-3 pt-3 border-top border-light-subtle">
+      © {{ now|date:"Y" }} Glamup Nails. All rights reserved
+    </div>
+  </div>
+</footer>
+
+<style>
+  :root{
+    --ft-bg:#f6f5ec;
+    --ft-ink:#2b3220;
+    --ft-edge:#a5aa7f;
+    --ft-chip:#f4f3e7;
+    --ft-olive:#a5aa7f;
+  }
+  /* ===== Thu gọn khoảng cách tổng ===== */
+  .footer-branding{ padding-top:.5rem; padding-bottom:.5rem; }
+  .ft-top{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
+  .ft-sep{ border-color:#e7e4d8; margin:.5rem 0; }
+
+  /* ===== Logo & Contact ===== */
+  .ft-logo img{ height:80px; width:auto; display:block; }  /* nhỏ gọn hơn */
+  .ft-contact-wrap{ display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+
+  .contact-card-red{
+    display:flex; align-items:center; background:#fff;
+    border-radius:12px; overflow:hidden; border:1px solid var(--ft-edge);
+    min-width:260px; height:52px; transition:.2s;
+    box-shadow:0 1px 0 rgba(0,0,0,.04);
+  }
+  .contact-card-red:hover{ box-shadow:0 4px 12px rgba(0,0,0,.08); transform:translateY(-1px); }
+  .contact-card-red .icon-box{
+    width:52px; height:100%; display:grid; place-items:center;
+    background:#a5aa7f; color:#fff; font-size:1.15rem;
+  }
+  .contact-card-red .info{ padding:.05rem .8rem; }
+  .contact-card-red .label{ font-size:.8rem; color:#6f6f6f; line-height:1.05; }
+  .contact-card-red .value{ font-weight:800; color:var(--ft-ink); line-height:1.15; }
+
+  /* ===== Social ===== */
+  .ft-social{ display:flex; align-items:center; gap:.6rem; }
+  .ft-social-ic{
+    width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    background:#fff; border:2px solid #e1e6cf; color:#2b3220; font-size:1rem;
+    transition:.2s;
+  }
+  .ft-social-ic:hover{ transform:translateY(-2px); box-shadow:0 2px 8px rgba(0,0,0,.06); }
+
+  /* ===== Hàng dưới ===== */
+  .ft-head{ font-weight:900; letter-spacing:.3px; margin-bottom:.35rem; }
+  .ft-links li+li{ margin-top:.3rem; }
+  .ft-links a:hover{ text-decoration:underline; text-decoration-thickness:2px; }
+  .ft-contact li{ margin:.25rem 0; }
+
+  /* Promo card gọn */
+  .promo-card{ background:#fff; border:2px solid var(--ft-edge); border-radius:12px; overflow:hidden; }
+  .promo-img{ width:100%; height:auto; display:block; }
+  .promo-body{ padding:.7rem; }
+  .promo-title{ font-weight:900; color:#a5aa7f; font-size:1rem; }
+  .promo-sub{ color:#4a4a3d; margin:.15rem 0 .55rem; font-size:.93rem; }
+  .promo-form{ display:flex; gap:.5rem; }
+  .promo-input{ flex:1; }
+  .promo-btn{ white-space:nowrap; }
+
+  /* Thu gọn dòng bản quyền */
+  .text-center.small{ margin-top:.8rem!important; padding-top:.8rem!important; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 800px){
+    .ft-logo img{ height:58px; }
+  }
+  @media (max-width: 576px){
+    .contact-card-red{ min-width:100%; }
+    .promo-form{ flex-direction:column; }
+    .promo-btn{ width:100%; }
+  }
+</style>

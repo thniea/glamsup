@@ -1,0 +1,281 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Review next-week schedule · Admin · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --edge:#cfd3a9; }
+  body{ background:var(--bg) }
+
+  .table thead th{
+    background:#a5aa7f; color:#111; text-align:center; position:sticky; top:0; z-index:2;
+  }
+
+  /* Ô lịch: bo tròn + gọn + chống “chèn chít” */
+  .cell-box{
+    border:1px dashed var(--edge); border-radius:12px; padding:.5rem .5rem 1.75rem;
+    min-height:90px; position:relative; overflow:hidden;
+  }
+  /* lớp mờ đáy khi nội dung nhiều */
+  .cell-box::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:28px;
+    background:linear-gradient(to bottom, rgba(246,245,236,0), var(--bg));
+    pointer-events:none;
+  }
+
+  /* Bọc chip: tự xuống hàng, canh giữa, khoảng cách nhỏ */
+  .chip-wrap{
+    display:flex; flex-wrap:wrap; gap:.35rem .4rem; justify-content:flex-start;
+  }
+
+  /* Chip tên: gọn, không vỡ bố cục, có ellipsis */
+  .name-chip{
+    display:inline-block; padding:.22rem .5rem; border-radius:999px;
+    border:1.5px solid var(--edge); background:#fff; font-weight:700;
+    cursor:pointer; text-decoration:none; color:#222; font-size:.82rem; line-height:1.15;
+    white-space:nowrap;overflow:visible;text-overflow:unset; max-width:none;}
+  .name-chip:hover{ background:#f0f3e4; }
+
+  /* Nút “+N more” nổi ở đáy ô */
+  .more-btn{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:.35rem; font-size:.8rem; border:1px solid var(--edge);
+    background:#fff; border-radius:999px; padding:.15rem .55rem; color:#1e2417;
+  }
+  .more-btn:hover{ background:#f0f3e4; }
+
+  /* Khi bung thêm, bỏ lớp mờ đáy & tăng chiều cao ô */
+  .cell-box.expanded{ max-height:none; overflow:visible; padding-bottom:.6rem; }
+  .cell-box.expanded::after{ display:none; }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='schedule' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 m-0 fw-bold">REVIEW NEXT-WEEK SCHEDULE</h2>
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-dark btn-sm" href="?start={{ prev_start }}">&laquo; Prev week</a>
+        <span class="badge rounded-pill px-3 py-2 bg-light text-dark">
+          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
+          <i class="bi bi-calendar-week ms-2"></i>
+        </span>
+        <a class="btn btn-outline-dark btn-sm" href="?start={{ next_start }}">Next week &raquo;</a>
+      </div>
+    </div>
+
+    {% include 'includes/_messages.html' %}
+
+    <div class="card border-2">
+      <div class="card-header bg-transparent text-center fw-semibold">
+        {{ week_start|date:"F Y" }}
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered m-0 align-middle">
+            <thead>
+              <tr>
+                <th style="width:160px;">Shift</th>
+                {% for d in days %}
+                  <th class="text-center">
+                    <div class="fw-semibold">{{ d|date:"D" }}</div>
+                    <div class="small text-muted">{{ d|date:"d/m" }}</div>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grid_rows %}
+                <tr>
+                  <th class="text-start ps-3">{{ row.label }}</th>
+                  {% for c in row.cols %}
+                    {% with uid=row.code|add:'-'|add:c.day|date:'Ymd' %}
+                    <td>
+                      <div class="cell-box text-center" id="box-{{ uid }}">
+                        {% if c.items and c.items|length > 0 %}
+                          <div class="chip-wrap">
+                            {# Hiển thị 5 người đầu #}
+                            {% for it in c.items|slice:":5" %}
+                              <a class="name-chip"
+                                 title="{{ it.staff_name }}"
+                                 data-bs-toggle="modal"
+                                 data-bs-target="#approveModal"
+                                 data-staff="{{ it.staff_id }}"
+                                 data-name="{{ it.staff_name }}"
+                                 data-date="{{ c.day|date:'Y-m-d' }}"
+                                 data-shift="{{ row.code }}">
+                                {{ it.staff_name }}
+                              </a>
+                            {% endfor %}
+                          </div>
+
+                          {# Phần còn lại ẩn trong collapse #}
+                          {% if c.items|length > 5 %}
+                            <div class="collapse mt-2" id="more-{{ uid }}">
+                              <div class="chip-wrap">
+                                {% for it in c.items|slice:"5:" %}
+                                  <a class="name-chip"
+                                     title="{{ it.staff_name }}"
+                                     data-bs-toggle="modal"
+                                     data-bs-target="#approveModal"
+                                     data-staff="{{ it.staff_id }}"
+                                     data-name="{{ it.staff_name }}"
+                                     data-date="{{ c.day|date:'Y-m-d' }}"
+                                     data-shift="{{ row.code }}">
+                                    {{ it.staff_name }}
+                                  </a>
+                                {% endfor %}
+                              </div>
+                            </div>
+
+                            <button class="more-btn"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#more-{{ uid }}"
+                                    aria-expanded="false"
+                                    aria-controls="more-{{ uid }}"
+                                    data-box="#box-{{ uid }}">
+                              +{{ c.items|length|add:"-5" }} more
+                            </button>
+                          {% endif %}
+                        {% else %}
+                          <span class="text-muted">—</span>
+                        {% endif %}
+                      </div>
+                    </td>
+                    {% endwith %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-footer bg-transparent">
+        <a class="btn btn-outline-secondary" href="{% url 'main:admin_schedule' %}?start={{ week_start|date:'Y-m-d' }}">
+          &laquo; Back to schedule
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ===== Modal approve/reject ===== #}
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" id="modal-action" value="approve_one">
+      <input type="hidden" name="staff" id="modal-staff">
+      <input type="hidden" name="work_date" id="modal-date">
+      <input type="hidden" name="shift" id="modal-shift">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Approve shift</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-2">
+          <div class="fw-semibold">Staff</div>
+          <div id="modal-staff-name" class="small text-muted">—</div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="fw-semibold">Date</div>
+            <div class="small text-muted" id="modal-date-text">—</div>
+          </div>
+          <div class="col-6">
+            <div class="fw-semibold">Shift</div>
+            <div class="small text-muted" id="modal-shift-text">—</div>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Work location (branch)</label>
+          <select name="branch" id="modal-branch" class="form-select" required>
+            <option value="">— Choose branch —</option>
+            {% for b in branches %}
+              <option value="{{ b.id }}">{{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-reject" class="btn btn-outline-secondary">Reject</button>
+        <button class="btn btn-dark">Approve</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+// Mở rộng/thu gọn: thêm/bớt class expanded để bỏ lớp mờ đáy
+document.querySelectorAll('.more-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const box = document.querySelector(btn.getAttribute('data-box'));
+    // chờ Bootstrap toggle xong rồi mới đo trạng thái
+    setTimeout(()=> {
+      const target = document.querySelector(btn.getAttribute('data-bs-target'));
+      if (target.classList.contains('show')) box.classList.add('expanded');
+      else box.classList.remove('expanded');
+    }, 200);
+  });
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('approveModal');
+  const actionInput = document.getElementById('modal-action');
+  const staffInput  = document.getElementById('modal-staff');
+  const dateInput   = document.getElementById('modal-date');
+  const shiftInput  = document.getElementById('modal-shift');
+
+  const staffName   = document.getElementById('modal-staff-name');
+  const dateText    = document.getElementById('modal-date-text');
+  const shiftText   = document.getElementById('modal-shift-text');
+  const rejectBtn   = document.getElementById('btn-reject');
+
+  modalEl.addEventListener('show.bs.modal', (ev) => {
+    const a = ev.relatedTarget;
+    // lấy data-* từ chip
+    const staff = a.getAttribute('data-staff');
+    const name  = a.getAttribute('data-name');
+    const date  = a.getAttribute('data-date');
+    const shift = a.getAttribute('data-shift');
+
+    // điền hidden inputs
+    actionInput.value = 'approve_one';
+    staffInput.value = staff;
+    dateInput.value  = date;
+    shiftInput.value = shift;
+
+    // hiển thị text
+    staffName.textContent = name;
+    dateText.textContent  = new Date(date).toLocaleDateString();
+    shiftText.textContent = shift.charAt(0) + shift.slice(1).toLowerCase();
+
+    // reset branch
+    document.getElementById('modal-branch').value = '';
+  });
+
+  // Đổi sang REJECT khi bấm nút Reject
+  rejectBtn.addEventListener('click', () => {
+    actionInput.value = 'reject_one';
+    // submit form ngay
+    modalEl.querySelector('form').submit();
+  });
+});
+</script>
+{% endblock %}

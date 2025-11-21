@@ -1,0 +1,143 @@
+{% extends "base_customer.html" %}
+{% load static humanize %}
+
+{% block title %}My Appointments{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --ink:#2b3220; --pale:#f6f5ec; --edge:#d6d1b8; }
+  .appointments-wrap{ background:var(--pale); }
+  .appt-container{
+    max-width:1200px; margin:24px auto 60px; padding:0 16px;
+    display:grid; grid-template-columns:280px 1fr; gap:22px;
+  }
+  @media (max-width: 900px){ .appt-container{ grid-template-columns:1fr; } }
+
+  .account-sidebar{ background:#fff; border:1px solid #e6e2d7; border-radius:14px; padding:14px; box-shadow:0 2px 0 rgba(0,0,0,.03); }
+  .account-sidebar .avatar{ width:72px;height:72px;border-radius:50%;border:3px solid #fff;object-fit:cover; }
+  .account-menu{ display:grid; gap:8px; margin-top:8px; }
+  .account-menu a{ display:flex;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:10px;font-weight:800;color:var(--ink);text-decoration:none; }
+  .account-menu a:hover{ background:#eef1dd; }
+  .account-menu a.active{ background:#eef1dd; box-shadow:inset 0 0 0 2px var(--edge); }
+
+  .page-title{ text-align:center; font-weight:900; letter-spacing:.5px; margin:6px 0 12px; }
+  .cards-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px; }
+  @media (max-width: 900px){ .cards-grid{ grid-template-columns:1fr; } }
+
+  .appt-card{ background:#fff; border:2px solid #e7e3d6; border-radius:16px; overflow:hidden; box-shadow:0 2px 0 rgba(0,0,0,.02); }
+  .appt-card .card-header{ background:#eef1de; padding:10px 14px; }
+  .pill{ display:inline-block; background:#dfe4c6; border:2px solid #cfd3a9; border-radius:999px; padding:4px 10px; font-weight:800; font-size:13px; }
+
+  .card-body{ padding:14px; }
+  .top-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; border:2px solid #e6e2d7; background:#fafafa; }
+  .title{ font-weight:900; }
+  .price{ margin-left:auto; font-weight:900; }
+
+  .field{ margin-top:8px; }
+  .field label{ display:block; font-weight:800; font-size:13px; color:#555; margin-bottom:6px; }
+  .field input, .field select{ width:100%; border:2px solid #d0ccb9; border-radius:12px; padding:9px 12px; background:#fff; outline:none; }
+  .inline-2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+
+  .card-footer{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-top:1px solid #eee; }
+  .status{ display:flex; align-items:center; gap:8px; font-weight:700; color:#41422f; }
+  .dot{ width:9px;height:9px;border-radius:50%;background:#c2c2c2; display:inline-block; }
+  .dot-green{ background:#5cb85c; } .dot-yellow{ background:#f0ad4e; }
+  .dot-gray{ background:#bdbdbd; } .dot-red{ background:#e45757; }
+
+  .btn{ border:2px solid #2b3220; background:#fff; border-radius:12px; padding:8px 14px; font-weight:900; text-decoration:none; color:#2b3220; }
+  .btn.solid{ background:var(--brand); border-color:var(--brand); color:#fff; }
+  .btn.warn{ border-color:#b24a3c; color:#b24a3c; }
+  .empty{ background:#fff; border:2px dashed var(--edge); border-radius:16px; padding:24px; text-align:center; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-4">
+
+  {% include "includes/_messages.html" %}
+
+  <!-- Sidebar -->
+    <div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_customer.html' with active='my_appointments' %}
+  </div>
+<div class="col-md-8 col-lg-9 d-grid gap-4">
+    <!-- Main -->
+    <section class="appt-main">
+      <h1 class="page-title">My Appointments</h1>
+
+      {% if bookings %}
+      <div class="cards-grid">
+        {% for ap in bookings %}
+        <article class="appt-card">
+          <header class="card-header">
+            <span class="pill">
+              {% if ap.status == 'DONE' %}Completed
+              {% elif ap.status == 'CONFIRMED' %}Upcoming
+              {% elif ap.status == 'CANCELED' %}Canceled
+              {% elif ap.status == 'IN_PROGRESS' %}In progress
+              {% else %}{{ ap.status_label }}{% endif %}
+            </span>
+            <span class="float-end small">#{{ ap.code }}</span>
+          </header>
+
+          <div class="card-body">
+            <div class="top-row">
+              <img src="{{ ap.service.image_url }}" class="thumb" alt="">
+              <div class="title">{{ ap.service.name }}</div>
+              <div class="price">{{ ap.service.price|intcomma }} VND</div>
+            </div>
+
+            <div class="field">
+              <label>Date &amp; Time</label>
+              <div class="inline-2">
+                <input type="text" value="{{ ap.start_at|date:'d/m/Y' }}" readonly>
+                <input type="text" value="{{ ap.start_at|date:'H:i' }}" readonly>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Location</label>
+              <input type="text" value="{{ ap.branch.name }}" readonly>
+            </div>
+          </div>
+
+          <footer class="card-footer">
+            <div class="status">
+              {% if ap.status == 'DONE' %}
+                <span class="dot dot-gray"></span> Completed
+              {% elif ap.status == 'CONFIRMED' %}
+                <span class="dot dot-green"></span> Confirmed
+              {% elif ap.status == 'CANCELED' %}
+                <span class="dot dot-red"></span> Canceled
+              {% elif ap.status == 'PENDING' %}
+                <span class="dot dot-yellow"></span> Pending
+              {% else %}
+                <span class="dot"></span> {{ ap.status_label }}
+              {% endif %}
+            </div>
+
+            <div class="cta">
+              {% if ap.status == 'DONE' and not ap.has_review %}
+                <a class="btn solid" href="{% url 'main:customer_feedback' ap.id %}">Give Feedback</a>
+              {% elif ap.can_cancel %}
+                <a class="btn warn" href="{{ ap.cancel_url }}" onclick="return confirm('Cancel this appointment?');">Cancel &gt;</a>
+              {% else %}
+                <span class="pill">—</span>
+              {% endif %}
+            </div>
+          </footer>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="empty">
+          Bạn chưa có lịch hẹn nào. <a class="btn solid ms-2" href="{% url 'main:services' %}">Đặt lịch ngay</a>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+{% endblock %}

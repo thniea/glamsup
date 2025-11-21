@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if block.super %}{% endif %}Staff · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Sidebar dùng chung (đồng bộ palette hiện có) */
+  .dash-sidebar{
+    background:#e1e6cf; border-radius:16px; padding:1rem; position:sticky; top:1rem;
+  }
+  .dash-avatar{ width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #fff; }
+  .dash-menu a{
+    display:flex;align-items:center;gap:.6rem;
+    padding:.6rem .9rem;border-radius:10px;font-weight:800;
+    color:#23301c;text-decoration:none;
+  }
+  .dash-menu a:hover{ background:#f4f3e7;text-decoration:none; }
+  .dash-menu a.active{ background:#f4f3e7; box-shadow:inset 0 0 0 2px #d6d1b8; }
+  .dash-ic{
+    width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+    border:2px solid #cfd3a9;color:#71804f;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar Staff -->
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_customer.html' %}
+  </div>
+
+  <!-- Khu vực nội dung trang con -->
+  <div class="col-lg-9 col-md-8">
+    {% block main %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

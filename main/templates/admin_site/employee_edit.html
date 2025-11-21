@@ -1,0 +1,95 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Edit Employee · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .title{ font-weight:900; letter-spacing:.5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='employee' %}
+  </div>
+
+  <div class="col-lg-9 col-md-8">
+    <h2 class="title text-center mb-3">EDIT EMPLOYEE</h2>
+    {% include "includes/_messages.html" %}
+
+    <div class="card border-2">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Username</label>
+              {{ form.username }}
+              {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Full name</label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              {{ form.phone_number }}
+              {% if form.phone_number.errors %}<div class="text-danger small">{{ form.phone_number.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              {{ form.address }}
+              {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors|striptags }}</div>{% endif %}
+            </div>
+              <div class="col-md-4">
+              <label class="form-label">Vai trò (Role)</label>
+              {{ form.role_group }}
+              {% if form.role_group.errors %}<div class="text-danger small">{{ form.role_group.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Active</label>
+              <div>{{ form.is_active }}</div>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Reset password</label>
+              {{ form.password }}
+              <div class="form-text">Để trống nếu không muốn đổi.</div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2">
+            <a href="{% url 'main:admin_employee' %}" class="btn btn-outline-secondary">Back</a>
+            <button class="btn btn-primary">Save changes</button>
+          </div>
+        </form>
+
+        <hr class="my-4">
+
+        <form method="post" class="d-inline" onsubmit="return confirm('Khoá/Mở tài khoản này?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="toggle_active">
+          <button class="btn btn-outline-dark">
+            {% if obj.is_active %}Deactivate{% else %}Activate{% endif %}
+          </button>
+        </form>
+
+        <form method="post" class="d-inline ms-2" onsubmit="return confirm('Xoá vĩnh viễn nhân viên này?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <button class="btn btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

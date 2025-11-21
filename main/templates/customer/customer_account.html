@@ -1,0 +1,240 @@
+{% extends 'base_customer.html' %}
+{% load static %}
+
+{% block title %}Tài khoản · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  .account-sidebar .avatar{
+    width:72px;height:72px;border-radius:50%;
+    border:3px solid #fff;object-fit:cover;background:#f6f6f6;
+  }
+  .account-menu a{ display:flex;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:10px;font-weight:800;color:var(--ink); text-decoration:none; }
+  .account-menu a .mi{ width:1.4rem; text-align:center; font-size:1.1rem; color:#6b705c; }
+  .account-menu a:hover{ background:#eef1dd; }
+  .account-menu a.active{ background:#eef1dd; box-shadow:inset 0 0 0 2px var(--edge); }
+
+  .panel{ position:relative; }
+  .panel-header{
+    background:var(--brand); color:#111; font-weight:900; font-size:1.1rem;
+    padding:.65rem .9rem; border-radius:10px 10px 0 0; border:2px solid var(--edge); border-bottom:none;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .panel-body{
+    padding:1rem 1.1rem; border:2px solid var(--edge); border-top:none; border-radius:0 0 10px 10px; background:#fff;
+  }
+  .kv{ display:grid; grid-template-columns:220px 1fr; row-gap:.4rem; }
+  @media (max-width: 991px){ .kv{ grid-template-columns:1fr; } }
+  .badge-tier{ background:#868b61; color:#fff; font-weight:800; border-radius:8px; padding:.1rem .5rem; }
+  .panel-actions{ display:flex; gap:.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  {% include "includes/_messages.html" %}
+
+  <!-- Sidebar -->
+    <div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_customer.html' with active='account' %}
+  </div>
+
+
+
+  <!-- Main -->
+  <div class="col-md-8 col-lg-9 d-grid gap-4">
+
+    <!-- Account information -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Account information</span>
+        <div class="panel-actions">
+          <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditAccount">Edit Account</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="kv">
+          <div>Account name</div>
+          <div class="fw-semibold">{{ request.user.full_name|default:request.user.username }}</div>
+
+          <div>Password</div><div>**********</div>
+
+          <div>Email</div><div>{{ request.user.email|default:"—" }}</div>
+
+          <div>Reward points</div>
+          <div>{{ loyalty.points }} points</div>
+
+          <div>Membership Status</div>
+          <div>
+            <span class="badge-tier">{{ loyalty.tier }}</span>
+            {% if loyalty.discount and loyalty.discount > 0 %}
+              <span class="text-muted ms-2">(voucher {{ loyalty.discount }}% trên tổng hóa đơn)</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Upcoming Appointments</span>
+        <div class="panel-actions"></div>
+      </div>
+      <div class="panel-body">
+        {% if next_booking %}
+          {{ next_booking.service_name }} — {{ next_booking.start_at|date:"d/m/Y, H:i" }}
+          — At {{ next_booking.branch_name }}
+          <div class="mt-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'main:my_appointments' %}">View all</a>
+          </div>
+        {% else %}
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="text-muted">You don’t have any upcoming appointments.</span>
+            <a class="btn btn-brand btn-sm" href="{% url 'main:services' %}">Book now</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'main:my_appointments' %}">My appointments</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Personal Information</span>
+        <div class="panel-actions">
+          <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditPersonal">Edit Personal</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="kv">
+          <div>Full name</div>
+          <div class="fw-semibold">{{ request.user.full_name|default:"—" }}</div>
+
+          <div>Email</div><div>{{ request.user.email|default:"—" }}</div>
+
+          <div>Phone number</div><div>{{ request.user.phone_number|default:"—" }}</div>
+
+          <div>Address</div><div>{{ request.user.address|default:"—" }}</div>
+
+          <div>Date of birth</div>
+          <div>{% if request.user.date_of_birth %}{{ request.user.date_of_birth|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Edit Account Modal (kèm đổi mật khẩu) -->
+<div class="modal fade" id="modalEditAccount" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'main:customer_account' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_account">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Full name</label>
+            <input type="text" name="full_name" class="form-control" value="{{ request.user.full_name }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ request.user.email }}">
+            <div class="form-text">Email phải là duy nhất.</div>
+          </div>
+
+          <hr class="my-3">
+          <div class="mb-2 fw-bold">Change password (optional)</div>
+          <div class="mb-3">
+            <label class="form-label">Current password</label>
+            <input type="password" name="old_password" class="form-control" autocomplete="current-password">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">New password</label>
+            <input type="password" name="new_password1" class="form-control" autocomplete="new-password">
+          </div>
+          <div class="mb-1">
+            <label class="form-label">Confirm new password</label>
+            <input type="password" name="new_password2" class="form-control" autocomplete="new-password">
+          </div>
+          <div class="form-text">Để trống 3 ô trên nếu bạn không muốn đổi mật khẩu.</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-brand" type="submit">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Personal Modal -->
+<div class="modal fade" id="modalEditPersonal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'main:customer_account' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_personal">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Personal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Phone number</label>
+            <input type="text" name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Address</label>
+            <input type="text" name="address" class="form-control" value="{{ request.user.address }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Date of birth</label>
+            <input type="date" name="date_of_birth" class="form-control"
+                   value="{% if request.user.date_of_birth %}{{ request.user.date_of_birth|date:'Y-m-d' }}{% endif %}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-brand" type="submit">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Change Avatar Modal -->
+<div class="modal fade" id="modalAvatar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'main:customer_account' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_avatar">
+        <div class="modal-header">
+          <h5 class="modal-title">Change avatar</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Upload image (JPG/PNG/WEBP, ≤ 2MB)</label>
+            <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-brand" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

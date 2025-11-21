@@ -1,0 +1,176 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Employee Management · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .card{ border:2px solid #cfd3a9; border-radius:12px; }
+  .card-footer{ border-top:2px solid #e4e1cf; }
+  .chip-lock{ display:inline-block; padding:.15rem .5rem; border-radius:999px; background:#e9ecef; font-size:.8rem; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar -->
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_admin.html' with active='employee' %}
+  </div>
+
+  <!-- ===== Main ===== -->
+  <div class="col-lg-9 col-md-8">
+    <h1 class="h4 mb-3 text-center">EMPLOYEE MANAGEMENT</h1>
+
+    {% include "includes/_messages.html" %}
+
+    <div class="row g-2 align-items-end mb-3">
+      <!-- Add New -->
+      <div class="col-md-4">
+        <button class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center"
+                data-bs-toggle="modal" data-bs-target="#addModal">
+          <i class="bi bi-plus-lg me-2"></i> Add New
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="col-md-4 ms-auto">
+        <form method="get">
+          <div class="input-group">
+            <input name="q" value="{{ q }}" class="form-control" placeholder="Search name, email, username…">
+            <button class="btn btn-outline-secondary" aria-label="Search">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-muted small mb-2">Total ({{ total|default:0 }})</div>
+
+    <div class="card border-2">
+      <div class="table-responsive">
+        <table class="table align-middle m-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width:56px;"></th>
+              <th>Name</th>
+              <th style="width:120px;">Role</th>
+              <th>Email</th>
+              <th style="width:150px;">Phone</th>
+              <th style="width:140px;" class="text-center">Work Schedule</th>
+              <th style="width:120px;" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in staff %}
+            <tr>
+              <td>
+                <div class="rounded-circle bg-light border" style="width:36px;height:36px;"></div>
+              </td>
+              <td class="fw-semibold">
+                {{ u.full_name|default:u.get_full_name|default:u.username }}
+                {% if not u.is_active %}
+                  <span class="chip-lock ms-2">Locked</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.groups.all %}
+                  {{ u.groups.first.name|default:'N/A' }}
+                {% else %}
+                  Staff (chưa gán)
+                {% endif %}
+              </td>
+              <td>{{ u.email|default:"—" }}</td>
+              <td>{{ u.phone_number|default:"—" }}</td>
+              <td class="text-center">
+                <a class="btn btn-sm btn-outline-dark"
+                   href="{% url 'main:admin_schedule' %}?staff={{ u.id }}">View</a>
+              </td>
+              <td class="text-center">
+                <a class="btn btn-sm btn-outline-dark"
+                   href="{% url 'main:admin_employee_edit' u.id %}">Edit</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No employees.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-transparent">
+        {% include 'includes/_pagination.html' with page_obj=staff %}
+      </div>
+    </div>
+
+    <!-- Add New (modal) -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" method="post" action="">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title">Add new staff</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors|striptags }}</div>{% endif %}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Full name</label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors|striptags }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-7">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors|striptags }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-5">
+                <label class="form-label">Phone</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}<div class="text-danger small">{{ form.phone_number.errors|striptags }}</div>{% endif %}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                {{ form.address }}
+                {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors|striptags }}</div>{% endif %}
+              </div>
+<div class="col-12">
+                <label class="form-label">Vai trò (Role)</label>
+                {{ form.role_group }}
+                {% if form.role_group.errors %}<div class="text-danger small">{{ form.role_group.errors|striptags }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors|striptags }}</div>{% endif %}
+                <div class="form-text">Để trống nếu muốn cấp tài khoản rồi nhân viên tự đổi sau.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+            <button class="btn btn-primary" type="submit">Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

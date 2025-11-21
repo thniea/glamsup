@@ -1,0 +1,135 @@
+{% extends "base_staff.html" %}
+{% load static %}
+
+{% block title %}Staff · Appointments · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --bg:#f6f5ec; --ink:#2b3220; --brand:#a5aa7f; --edge:#cfd3a9; --pill:#6a7347;
+  }
+  body{ background:var(--bg); color:var(--ink); font-family:'Nunito',sans-serif; }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .sort-btn{
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:#d9d6c8; border:1px solid #cfc9b7; color:var(--ink);
+    padding:.5rem .9rem; border-radius:8px; font-weight:800;
+  }
+
+  .cards{ display:flex; flex-direction:column; gap:18px; }
+  .card-ap{ background:#fff; border-radius:16px; padding:12px 14px; border:2px solid var(--brand); box-shadow:0 1px 0 rgba(0,0,0,.05); }
+  .row-ap{ display:grid; grid-template-columns: 84px 170px 1fr 1fr 150px; gap:14px; align-items:center; }
+
+  .thumb{ width:72px; height:72px; border-radius:10px; overflow:hidden; background:#f0efe9; }
+  .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .svc .name{ font-weight:800; line-height:1; }
+  .svc .price{ font-weight:800; }
+
+  .sep{ position:relative; padding-right:16px; }
+  .sep::after{ content:""; position:absolute; right:0; top:8px; bottom:8px; width:2px; background:#c9c4b4; border-radius:1px; }
+
+  .pay-tag{ display:inline-block; padding:6px 10px; border-radius:10px; font-weight:800; background:#fff0f0; color:#8b5656; border:1px dashed #d8b6b6; text-align:center; }
+  .pay-tag.paid{ background:#e8f3e8; color:#2c6f30; border:1px solid #bcd8be; }
+
+  /* ĐIỀU CHỈNH CÁC LỚP DƯỚI ĐÂY ĐỂ ĐẨY TRẠNG THÁI VÀ HÀNH ĐỘNG XUỐNG DƯỚI CÙNG VÀ CĂN CHỈNH */
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px; /* Tạo khoảng cách với hàng trên */
+  }
+  .actions{ display:flex; gap:14px; } /* Đã có, giữ nguyên */
+  /* END CỦA ĐIỀU CHỈNH */
+
+  .pill{ border-radius:18px; padding:7px 16px; font-weight:800; border:2px solid var(--pill); background:#fff; color:var(--pill); }
+  .pill.solid{ background:var(--pill); color:#fff; }
+  .pill.is-on{ box-shadow:inset 0 0 0 2px #00000010; }
+
+  @media (max-width: 1100px){ .row-ap{ grid-template-columns: 84px 1fr 1fr 150px; } .sep::after{ display:none; } }
+  @media (max-width: 760px){ .row-ap{ grid-template-columns: 84px 1fr; row-gap:10px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-md-4 col-lg-3">
+    {% include 'includes/_sidebar_staff.html' with active='appointments' %}
+  </div>
+
+  <div class="col-lg-9">
+    <div class="toolbar">
+      <h1 class="h5 fw-bold m-0">APPOINTMENTS</h1>
+      <button class="sort-btn" type="button"><i class="bi bi-chevron-down"></i> <span>Date</span></button>
+    </div>
+
+    {% include "includes/_messages.html" %}
+
+    {% if appointments %}
+      <div class="cards">
+        {% for ap in appointments %}
+        <article class="card-ap">
+          <div class="row-ap">
+            <div class="thumb">
+              <img src="{% if ap.service_image_url %}{{ ap.service_image_url }}{% else %}{% static 'img/placeholder_service.jpg' %}{% endif %}" alt="">
+            </div>
+
+            <div class="svc">
+              <div class="name">{{ ap.service_name|default:"Service" }}</div>
+              <div class="price">{{ ap.price|default:"" }}</div>
+            </div>
+
+            <div class="sep">
+              <div>Customer: <strong>{{ ap.customer_name|default:"—" }}</strong></div>
+              <div>Phone: {{ ap.phone|default:"—" }}</div>
+            </div>
+
+            <div class="sep">
+              <div>At : <strong>{{ ap.branch_name|default:"—" }}</strong></div>
+              <div>Time: {{ ap.time_display|default:"—" }}</div>
+            </div>
+
+            <div>
+              <span class="pay-tag {% if ap.payment_status == 'PAID' %}paid{% endif %}">
+                {% if ap.payment_status == 'PAID' %}Paid{% else %}Not paid{% endif %}
+              </span>
+            </div>
+          </div>
+
+          {# BẮT ĐẦU PHẦN CHỈNH SỬA: Dùng Flexbox để căn chỉnh #}
+          <div class="status-row">
+            <div class="status-display d-flex align-items-center gap-2">
+              {% if ap.status == 'DONE' %}
+                <span class="dot" style="width:10px;height:10px;background:#4caf50;border-radius:50%;display:inline-block;"></span>
+                <span class="fw-bold text-success">Đã hoàn thành</span>
+              {% elif ap.status == 'ONGOING' %}
+                <span class="dot" style="width:10px;height:10px;background:#ff9800;border-radius:50%;display:inline-block;"></span>
+                <span class="fw-bold text-warning">Đang thực hiện</span>
+              {% elif ap.status == 'CONFIRMED' %}
+                <span class="dot" style="width:10px;height:10px;background:#9e9e9e;border-radius:50%;display:inline-block;"></span>
+                <span class="fw-bold text-secondary">Đã xác nhận</span>
+              {% else %}
+                <span class="dot" style="width:10px;height:10px;background:#ccc;border-radius:50%;display:inline-block;"></span>
+                <span class="fw-bold text-muted">Chờ xử lý</span>
+              {% endif %}
+            </div>
+
+            <form method="post" class="actions m-0">
+              {% csrf_token %}
+              <input type="hidden" name="id" value="{{ ap.id }}">
+              <button class="pill {% if ap.status != 'DONE' %}is-on{% endif %}" name="action" value="mark_uncompleted">Uncompleted</button>
+              <button class="pill solid {% if ap.status == 'DONE' %}is-on{% endif %}" name="action" value="mark_completed">Completed</button>
+            </form>
+          </div>
+          {# KẾT THÚC PHẦN CHỈNH SỬA #}
+
+        </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No appointments.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Đặt lịch hẹn · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  .page-wrap{ padding-top:.5rem; padding-bottom:2rem; }
+
+  /* Card headers nhẹ, đồng bộ brand */
+  .card-soft .card-head{
+    font-weight:900;
+    color:var(--ink);
+    margin-bottom:.75rem;
+  }
+
+  /* Lưới giờ chọn */
+  .time-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(90px,1fr));
+    gap:.6rem;
+  }
+  .time-slot{
+    border:2px solid var(--edge);
+    background:var(--surface);
+    border-radius:10px;
+    padding:.55rem .2rem;
+    text-align:center;
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+    transition:transform .06s ease, background .15s ease;
+  }
+  .time-slot:hover{ transform:translateY(-1px); }
+  .time-slot.active{
+    background:var(--brand);
+    color:#fff;
+    border-color:var(--brand);
+  }
+  .time-slot.disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    text-decoration:line-through;
+  }
+
+  @media (max-width:575.98px){
+    .time-grid{ grid-template-columns:repeat(3, minmax(84px,1fr)); }
+  }
+
+  /* Tiêu đề trang đậm hơn */
+  .page-title{
+    font-weight:900;
+    letter-spacing:.2px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container page-wrap">
+  <h1 class="h4 text-center mb-4 page-title">Confirm Service &amp; Book Appointment</h1>
+
+  <form method="post" enctype="multipart/form-data" class="mb-5">{% csrf_token %}
+    <div class="row g-4">
+
+      <!-- LEFT: Selected Service -->
+      <div class="col-md-6">
+        <div class="card-soft h-100">
+          <div class="card-head">Selected Service</div>
+
+          <!-- Service row -->
+          <div class="d-flex align-items-center gap-3 pb-3 border-soft" style="border-width:0 0 2px 0;">
+            <div class="ratio ratio-1x1" style="width:84px;max-width:84px;">
+              <img src="{{ selected_service.image_url|default:'/static/images/placeholder.png' }}"
+                   class="rounded object-fit-cover border-soft" alt="Service" style="border-width:2px;">
+            </div>
+
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ selected_service.name|default:"(Choose a service below)" }}</div>
+              <!-- Giá hiển thị VND -->
+              <div class="text-muted small">{{ selected_service.price_vnd|default:"0₫" }}</div>
+            </div>
+
+            <div class="input-group input-group-sm" style="width:110px;">
+              <button class="btn btn-outline-secondary" type="button" disabled><i class="bi bi-dash-lg"></i></button>
+              <input type="number" name="quantity" class="form-control text-center" value="{{ quantity|default:1 }}" min="1">
+              <button class="btn btn-outline-secondary" type="button" disabled><i class="bi bi-plus-lg"></i></button>
+            </div>
+          </div>
+
+          <!-- Total -->
+          <div class="d-flex justify-content-between align-items-center py-3 border-soft" style="border-width:0 0 2px 0;">
+            <div class="fw-semibold">Total</div>
+            <!-- Tổng cũng hiển thị VND -->
+            <div class="fs-5 fw-bold">{{ selected_service.price_vnd|default:"0₫" }}</div>
+          </div>
+
+          <!-- Branch -->
+          <div class="pt-3">
+            <label class="form-label fw-bold">Branch</label>
+            <select class="form-select" name="branch_id" required>
+              <option value="">— Please select branch —</option>
+              {% for b in branches %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}
+            </select>
+          </div>
+
+          <!-- Date & Time (Time opens modal) -->
+          <div class="row g-3 pt-1">
+            <div class="col-sm-6">
+              <label class="form-label fw-bold">Date</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                <input type="date" class="form-control" id="date_picker" name="date"
+                       value="{{ default_date }}" min="{{ min_date }}" required>
+              </div>
+            </div>
+
+            <div class="col-sm-6">
+              <label class="form-label fw-bold">Time</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                <input type="text" class="form-control" id="time_display" name="time_display"
+                       placeholder="--:--" readonly required data-bs-toggle="modal" data-bs-target="#timeModal">
+              </div>
+              <input type="hidden" name="time_slot" id="time_slot" required>
+            </div>
+          </div>
+
+          <!-- Notes + Upload -->
+          <div class="pt-3">
+            <label class="form-label fw-bold">Notes (Optional)</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="Any special request…"></textarea>
+            <div class="d-flex justify-content-end mt-2">
+              <label class="btn btn-outline-brand">
+                <i class="bi bi-image me-1"></i> Upload photo
+                <input type="file" name="reference_image" accept="image/*" hidden>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Customer Information -->
+      <div class="col-md-6">
+        <div class="card-soft h-100">
+          <div class="card-head">Customer Information</div>
+          <div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Full name</label>
+              <input type="text" name="full_name" class="form-control" placeholder="Alex Nguyen" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Phone number</label>
+              <input type="tel" name="phone" class="form-control" placeholder="0123 456 789" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Email (optional)</label>
+              <input type="email" name="email" class="form-control" placeholder="name@example.com">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold d-block">Payment Method</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="payment_method" id="pm-online" value="ONLINE" checked>
+                <label class="form-check-label" for="pm-online"><i class="bi bi-phone-flip me-1"></i> Momo/Banking</label>
+              </div>
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="radio" name="payment_method" id="pm-offline" value="OFFLINE">
+                <label class="form-check-label" for="pm-offline"><i class="bi bi-shop me-1"></i> Pay at Store</label>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button class="btn btn-brand btn-lg fw-800">Book Appointment Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- giữ id dịch vụ để POST -->
+    <input type="hidden" name="service_id" value="{{ selected_service.id|default:'' }}">
+  </form>
+</div>
+
+<!-- Time Picker Modal -->
+<div class="modal fade" id="timeModal" tabindex="-1" aria-labelledby="timeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="timeModalLabel">Chọn giờ cho ngày <span id="tp-date-label"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="time-grid" class="time-grid"
+             data-available='{% if free_slots %}[{% for s in free_slots %}"{{ s.value }}"{% if not forloop.last %},{% endif %}{% endfor %}]{% else %}[]{% endif %}'
+             data-booked='{% if booked_times %}[{% for t in booked_times %}"{{ t }}"{% if not forloop.last %},{% endif %}{% endfor %}]{% else %}[]{% endif %}'>
+        </div>
+        <div class="small text-muted mt-2">Ô <b>xám</b> là đã được đặt hoặc không khả dụng.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-brand" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const timeGrid    = document.getElementById('time-grid');
+  const timeInput   = document.getElementById('time_slot');
+  const timeDisplay = document.getElementById('time_display');
+  const datePicker  = document.getElementById('date_picker');
+  const dateLabel   = document.getElementById('tp-date-label');
+
+  const ALL_TIMES = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
+                     "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
+                     "16:00","16:30","17:00","17:30","18:00"];
+
+  let availableFromServer = [];
+  let bookedFromServer    = [];
+  try { availableFromServer = JSON.parse(timeGrid.getAttribute('data-available') || "[]"); } catch(e){}
+  try { bookedFromServer    = JSON.parse(timeGrid.getAttribute('data-booked')    || "[]"); } catch(e){}
+
+  function renderGrid(available = null, booked = []) {
+    timeGrid.innerHTML = "";
+    const allow = new Set(available || ALL_TIMES);
+    const bookedSet = new Set(booked);
+
+    (available ? available : ALL_TIMES).forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'time-slot';
+      div.textContent = t;
+
+      if (bookedSet.has(t) || !allow.has(t)) {
+        div.classList.add('disabled');
+      } else {
+        div.addEventListener('click', () => {
+          document.querySelectorAll('#time-grid .time-slot').forEach(s => s.classList.remove('active'));
+          div.classList.add('active');
+          timeInput.value = t;
+          timeDisplay.value = t;
+          bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+        });
+      }
+      timeGrid.appendChild(div);
+    });
+  }
+
+  document.getElementById('timeModal').addEventListener('show.bs.modal', async () => {
+    const d = datePicker?.value || '';
+    dateLabel.textContent = d ? new Date(d).toLocaleDateString('vi-VN') : '(chưa chọn)';
+
+    // Nếu có API thật, bật fetch và bỏ phần DEMO phía dưới:
+    // try {
+    //   const res = await fetch(`/api/free-slots/?date=${encodeURIComponent(d)}`);
+    //   const data = await res.json(); // {available:[], booked:[]}
+    //   renderGrid(data.available?.length ? data.available : null, data.booked || []);
+    //   return;
+    // } catch(e){ console.warn('Fetch slots failed, using demo data', e); }
+
+    // DEMO: booked thay đổi theo thứ trong tuần
+    let demoBooked = bookedFromServer;
+    if (d) {
+      const day = new Date(d).getDay(); // 0..6
+      if (day === 1) demoBooked = ["09:00","10:30","14:30","18:00"];
+      if (day === 6) demoBooked = ["11:00","13:30","17:00"];
+    }
+    renderGrid(availableFromServer.length ? availableFromServer : null, demoBooked);
+  });
+
+  datePicker?.addEventListener('change', () => { timeInput.value=""; timeDisplay.value=""; });
+});
+</script>
+{% endblock %}
