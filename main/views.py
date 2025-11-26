@@ -2407,6 +2407,6 @@ def _award_loyalty_for_appointment(appt: Appointment):
     appt.save(update_fields=["loyalty_awarded"])
 
 #test git pullfgfffcddfdf
-
+#testttt
 
 #testt Linh1111
