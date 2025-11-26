@@ -2407,4 +2407,4 @@ def _award_loyalty_for_appointment(appt: Appointment):
     appt.save(update_fields=["loyalty_awarded"])
 
 
-#testt Linh
+#testt Linh1111
