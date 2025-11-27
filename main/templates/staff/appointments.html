@@ -59,10 +59,25 @@
   </div>
 
   <div class="col-lg-9">
-    <div class="toolbar">
+  <div class="toolbar">
       <h1 class="h5 fw-bold m-0">APPOINTMENTS</h1>
-      <button class="sort-btn" type="button"><i class="bi bi-chevron-down"></i> <span>Date</span></button>
+
+      <form method="get" class="m-0">
+        <select name="status" class="sort-btn" onchange="this.form.submit()">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>
+            All appointments
+          </option>
+          <option value="done" {% if status_filter == 'done' %}selected{% endif %}>
+            Completed
+          </option>
+          <option value="not_done" {% if status_filter == 'not_done' %}selected{% endif %}>
+            Uncompleted
+          </option>
+        </select>
+      </form>
     </div>
+
+
 
     {% include "includes/_messages.html" %}
 

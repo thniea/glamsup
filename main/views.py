@@ -1499,6 +1499,8 @@ def staff_appointments(request):
     Cho phép đánh dấu Completed / Uncompleted.
     """
     staff = request.user
+    # ---- đọc filter từ query string ----
+    status_filter = request.GET.get("status", "all")
 
     # Các lịch của chính nhân viên đang đăng nhập
     appt_qs = (
@@ -1508,7 +1510,11 @@ def staff_appointments(request):
         .prefetch_related("service_lines__service", "payments")
         .order_by("appointment_date", "appointment_time")
     )
-
+    # áp dụng filter
+    if status_filter == "done":
+        appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
+    elif status_filter == "not_done":
+        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE)
     appts = []
     for ap in appt_qs:
         # Lấy 1 dòng dịch vụ để hiển thị tên/ảnh/giá
@@ -1553,6 +1559,7 @@ def staff_appointments(request):
 
     return render(request, "staff/appointments.html", {
         "appointments": appts,
+        "status_filter": status_filter,
         "is_receptionist": is_receptionist(request.user),
         "is_technician": is_technician(request.user),
     })
