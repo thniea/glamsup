@@ -50,34 +50,36 @@
   }
   .hero-right img:hover{ transform:scale(1.03); }
 
-  /* Promo bar */
   .promo-bar{
-    background:var(--brand);
-    color:#fff;
-    border-radius:10px;
-    padding:12px 18px;
-    display:flex; align-items:center; gap:12px;
-    margin:22px 0 10px;
-    font-weight:800;
-    letter-spacing:.3px;
-    justify-content:center
-  }
-  .promo-badge{
-    background:#f6c66a;
-    color:#6b3a00;
-    font-weight:900;
-    border-radius:8px;
-    padding:6px 12px;
-  }
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  background:var(--brand);            /* Olive */
+  color:#fff;
+  padding:14px 20px;
+  border-radius:10px;
+  margin:24px 0 10px;
+  font-weight:700;
+  text-decoration:none;
+  transition:0.2s ease;
+}
 
-  /* Section title */
-  .sec-title{
-    font-weight:900;
-    text-align:center;
-    letter-spacing:.05em;
-    color:var(--olive);
-    margin:30px 0 16px;
-  }
+.promo-bar:hover{
+  filter:brightness(.95);
+  transform:translateY(-1px);
+}
+
+/* Badge vàng */
+.promo-badge{
+  background:#f6c66a;
+  color:#6b3a00;
+  font-weight:900;
+  padding:6px 14px;
+  border-radius:8px;
+  letter-spacing:.5px;
+  font-size:.92rem;
+}
 
   /* ========== HOT SERVICES ========== */
   .hot-card{
@@ -311,7 +313,7 @@
   </div>
 </section>
 
-  <!-- REVIEWS -->
+<!-- REVIEWS -->
 <section class="reviews my-5">
   <div class="row g-4 align-items-start">
     <!-- Cột trái có khung nền xanh + ảnh -->
@@ -324,21 +326,49 @@
       </div>
     </div>
 
-    <!-- Cột phải: danh sách review có gạch phân cách -->
+    <!-- Cột phải: danh sách review thật -->
     <div class="col-lg-7">
-      {% for c in "123" %}
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p class="mb-2 small text-muted">“Excellent experience! Professional service and a very relaxing atmosphere.”</p>
-        <div class="customer">
-          <img src="{% static 'img/home/av-' %}{{ forloop.counter }}.jpg" class="avatar" alt="">
-          <strong>Customer {{ forloop.counter }}</strong>
+      {% if home_reviews %}
+        {% for rv in home_reviews %}
+        <div class="review-card">
+          <div class="stars">
+            {% for i in "12345" %}
+              {% if forloop.counter <= rv.stars %}★{% else %}☆{% endif %}
+            {% endfor %}
+          </div>
+
+          <p class="mb-2 small text-muted">
+            “{{ rv.comment }}”
+          </p>
+
+          <div class="customer">
+            <img src="{{ rv.avatar }}" class="avatar" alt="">
+            <div>
+              <strong>{{ rv.customer_name }}</strong>
+              {% if rv.service_name %}
+                <div class="small text-muted">for {{ rv.service_name }}</div>
+              {% endif %}
+            </div>
+          </div>
         </div>
-      </div>
-      {% endfor %}
+        {% endfor %}
+      {% else %}
+        {# Fallback demo nếu chưa có feedback nào #}
+        {% for c in "123" %}
+        <div class="review-card">
+          <div class="stars">★★★★★</div>
+          <p class="mb-2 small text-muted">“Excellent experience! Professional service and a very relaxing atmosphere.”</p>
+          <div class="customer">
+            <img src="{% static 'img/home/av-' %}{{ forloop.counter }}.jpg" class="avatar" alt="">
+            <strong>Customer {{ forloop.counter }}</strong>
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
     </div>
   </div>
 </section>
+
 
 </div>
 {% endblock %}

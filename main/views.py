@@ -193,15 +193,56 @@ def home(request):
         "price": float(s.price or 0),
     } for s in coll_qs]
 
+    # HOME REVIEWS – lấy 3 feedback PUBLISHED mới nhất - 27/11
+    rv_qs = (
+        Review.objects
+        .filter(status=Review.Status.PUBLISHED)
+        .select_related("customer", "service")
+        .order_by("-review_date")[:3]
+    )
+
+    home_reviews = []
+    for rv in rv_qs:
+        customer = rv.customer
+        avatar_url = "/static/img/avatar-placeholder.png"
+        if getattr(customer, "avatar", None) and getattr(customer.avatar, "url", None):
+            avatar_url = customer.avatar.url
+
+        home_reviews.append({
+            "customer_name": (customer.full_name or customer.username) if customer else "Customer",
+            "comment": rv.comment or "",
+            "rating": float(rv.rating or 0),
+            "stars": int(round(float(rv.rating or 0))),  # số sao nguyên để render
+            "avatar": avatar_url,
+            "service_name": rv.service.service_name if rv.service else "",
+        })
+
     return render(
         request,
         "customer/home.html",
         {
             "featured_services": featured_services,
             "collection": collection,
+            "home_reviews": home_reviews,  # truyền ra template
         }
     )
 
+def promotion(request):
+    """
+    Simple promotion information page.
+    Later you can replace this with dynamic data or database-driven promotions.
+    """
+    promo = {
+        "title": "December Promotion - 20% Off Gel Nail Services",
+        "subtitle": "Special discount for customers booking during September.",
+        "content": (
+            "Enjoy 20% off all gel nail services when booking through the GlamUp Nails website. "
+            "Applicable from September 1st to September 30th across all branches. "
+            "This promotion cannot be combined with other offers or discounts."
+        ),
+        "note": "Please show the promotion code at the reception desk upon arrival.",
+    }
+    return render(request, "customer/promotion.html", {"promo": promo})
 
 def login_view(request):
     form = LoginForm(request=request, data=request.POST or None)
@@ -1458,6 +1499,8 @@ def staff_appointments(request):
     Cho phép đánh dấu Completed / Uncompleted.
     """
     staff = request.user
+    # ---- đọc filter từ query string ----
+    status_filter = request.GET.get("status", "all")
 
     # Các lịch của chính nhân viên đang đăng nhập
     appt_qs = (
@@ -1467,7 +1510,11 @@ def staff_appointments(request):
         .prefetch_related("service_lines__service", "payments")
         .order_by("appointment_date", "appointment_time")
     )
-
+    # áp dụng filter
+    if status_filter == "done":
+        appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
+    elif status_filter == "not_done":
+        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE)
     appts = []
     for ap in appt_qs:
         # Lấy 1 dòng dịch vụ để hiển thị tên/ảnh/giá
@@ -1512,6 +1559,7 @@ def staff_appointments(request):
 
     return render(request, "staff/appointments.html", {
         "appointments": appts,
+        "status_filter": status_filter,
         "is_receptionist": is_receptionist(request.user),
         "is_technician": is_technician(request.user),
     })
@@ -2406,4 +2454,3 @@ def _award_loyalty_for_appointment(appt: Appointment):
     appt.loyalty_awarded = True
     appt.save(update_fields=["loyalty_awarded"])
 
-#test git pullfgfffcddfdf
