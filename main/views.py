@@ -1302,11 +1302,40 @@ def staff_account(request):
         "avatar_url": avatar_url,
     }
 
+    # ========= NEW: Upcoming appointments của nhân viên =========
+    today = timezone.localdate()
+    now_t = timezone.localtime().time()
+
+    up_qs = (
+        Appointment.objects
+        .filter(staff_lines__staff=u)
+        .exclude(status=Appointment.Status.DONE)
+        .exclude(status=Appointment.Status.CANCELED)
+        .filter(
+            Q(appointment_date__gt=today) |
+            Q(appointment_date=today, appointment_time__gte=now_t)
+        )
+        .select_related("branch")
+        .prefetch_related("service_lines__service")
+        .order_by("appointment_date", "appointment_time")[:5]  # lấy tối đa 5 lịch sắp tới
+    )
+
+    upcoming = []
+    for ap in up_qs:
+        line = ap.service_lines.select_related("service").first()
+        svc = getattr(line, "service", None)
+
+        upcoming.append({
+            "service_name": getattr(svc, "service_name", "Service"),
+            "date_display": f"{ap.appointment_date.strftime('%d/%m')} {ap.appointment_time.strftime('%H:%M')}",
+            "branch_name": ap.branch.name if ap.branch else "-",
+        })
+
     return render(request, "staff/staff_account.html", {
         "staff": staff_ctx,
-        "upcoming": [],
+        "upcoming": upcoming,
         "is_receptionist": is_receptionist(request.user),
-        "is_technician": is_technician(request.user)
+        "is_technician": is_technician(request.user),
     })
 # ====== RECEPTIONIST: Inbox (xem liên hệ khách gửi) ======
 
