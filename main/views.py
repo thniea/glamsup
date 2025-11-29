@@ -1486,7 +1486,7 @@ def staff_schedule(request):
         "is_technician": is_technician(request.user)
     }
     return render(request, "staff/staff_schedule.html", ctx)
-
+from django.db.models import Case, When, Value, IntegerField
 @never_cache
 @login_required
 @user_passes_test(is_staff_user)
@@ -1494,10 +1494,17 @@ def staff_appointments(request):
     """
     KTV xem các lịch hẹn mình được phân công.
     Cho phép đánh dấu Completed / Uncompleted.
+     Filter:
+      - upcoming  (mặc định): các lịch chưa DONE và còn ở hiện tại / tương lai
+      - completed: các lịch đã DONE
+      - all      : tất cả lịch (không phân biệt trạng thái / thời gian)
     """
     staff = request.user
-    # ---- đọc filter từ query string ----
-    status_filter = request.GET.get("status", "all")
+    # ---- đọc filter từ query string (mặc định: upcoming) ----
+    status_filter = request.GET.get("status", "upcoming")
+
+    today = timezone.localdate()
+    now_t = timezone.localtime().time()
 
     # Các lịch của chính nhân viên đang đăng nhập
     appt_qs = (
@@ -1505,13 +1512,40 @@ def staff_appointments(request):
         .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
         .select_related("branch", "customer")
         .prefetch_related("service_lines__service", "payments")
-        .order_by("appointment_date", "appointment_time")
+
     )
     # áp dụng filter
-    if status_filter == "done":
+    if status_filter == "completed":
         appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
-    elif status_filter == "not_done":
-        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE)
+    elif status_filter == "all":
+        # không filter thêm
+        pass
+    else:
+        # UPCOMING (mặc định):
+        # - chưa DONE
+        # - ngày hẹn lớn hơn hôm nay
+        #   hoặc cùng ngày hôm nay nhưng giờ >= hiện tại
+        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE).filter(
+            Q(appointment_date__gt=today) |
+            Q(appointment_date=today, appointment_time__gte=now_t)
+        )
+        status_filter = "upcoming"  # normalize
+    # Sắp xếp theo trạng thái ưu tiên:
+    # IN_PROGRESS → CONFIRMED → PENDING → DONE
+    status_order = Case(
+        When(status=Appointment.Status.IN_PROGRESS, then=Value(1)),
+        When(status=Appointment.Status.CONFIRMED, then=Value(2)),
+        When(status=Appointment.Status.PENDING, then=Value(3)),
+        When(status=Appointment.Status.DONE, then=Value(4)),
+        default=Value(5),
+        output_field=IntegerField(),
+    )
+    # Áp dụng sắp xếp theo trạng thái *nếu lọc ALL*
+    if status_filter == "all":
+        appt_qs = appt_qs.order_by(status_order, "appointment_date", "appointment_time")
+    else:
+        # giữ sắp xếp bình thường cho upcoming / completed
+        appt_qs = appt_qs.order_by("appointment_date", "appointment_time")
     appts = []
     for ap in appt_qs:
         # Lấy 1 dòng dịch vụ để hiển thị tên/ảnh/giá
