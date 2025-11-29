@@ -228,10 +228,7 @@ def home(request):
     )
 
 def promotion(request):
-    """
-    Simple promotion information page.
-    Later you can replace this with dynamic data or database-driven promotions.
-    """
+
     promo = {
         "title": "December Promotion - 20% Off Gel Nail Services",
         "subtitle": "Special discount for customers booking during September.",
