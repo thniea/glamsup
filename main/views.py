@@ -1540,14 +1540,22 @@ def staff_appointments(request):
     today = timezone.localdate()
     now_t = timezone.localtime().time()
 
-    # Các lịch của chính nhân viên đang đăng nhập
-    appt_qs = (
-        Appointment.objects
-        .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
-        .select_related("branch", "customer")
-        .prefetch_related("service_lines__service", "payments")
+    if is_receptionist(staff):
+        # LỄ TÂN: xem tất cả lịch
+        appt_qs = (
+            Appointment.objects
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service")
+        )
+    else:
+        # Các lịch của chính nhân viên đang đăng nhập
+        appt_qs = (
+            Appointment.objects
+            .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service", "payments")
 
-    )
+        )
     # áp dụng filter
     if status_filter == "completed":
         appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
