@@ -1182,12 +1182,27 @@ def check_in(request, pk: int):
 def check_out(request, pk: int):
     """
     Lễ tân kết thúc lịch hẹn → DONE.
-    (Nếu muốn thu tiền tại quầy khi UNPAID, bạn có thể cập nhật Payment ở đây.)
+    Đây là bước cuối cùng:
+      - Hoàn tất lịch hẹn
+      - Cộng điểm loyalty (nếu đủ điều kiện)
     """
     appt = get_object_or_404(Appointment, pk=pk)
+
+    # Tránh check-out lại những lịch đã xong/hủy
+    if appt.status in [Appointment.Status.DONE, Appointment.Status.CANCELED]:
+        messages.info(request, "Lịch hẹn này đã được xử lý xong.")
+        return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
+
     appt.status = Appointment.Status.DONE
     appt.save(update_fields=["status"])
-    messages.success(request, f"Đã check-out và hoàn tất lịch hẹn { _make_booking_code(appt.id) }.")
+
+    #  Cộng điểm loyalty tại bước check-out
+    _award_loyalty_for_appointment(appt)
+
+    messages.success(
+        request,
+        f"Đã check-out và hoàn tất lịch hẹn { _make_booking_code(appt.id) }."
+    )
     return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
 @never_cache
 @login_required
@@ -1540,34 +1555,36 @@ def staff_appointments(request):
     today = timezone.localdate()
     now_t = timezone.localtime().time()
 
-    if is_receptionist(staff):
-        # LỄ TÂN: xem tất cả lịch
-        appt_qs = (
-            Appointment.objects
-            .select_related("branch", "customer")
-            .prefetch_related("service_lines__service")
-        )
-    else:
-        # Các lịch của chính nhân viên đang đăng nhập
-        appt_qs = (
-            Appointment.objects
-            .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
-            .select_related("branch", "customer")
-            .prefetch_related("service_lines__service", "payments")
 
-        )
+
+    # Các lịch của chính nhân viên đang đăng nhập
+    appt_qs = (
+        Appointment.objects
+        .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
+        .select_related("branch", "customer")
+        .prefetch_related("service_lines__service", "payments")
+
+    )
+    # áp dụng filter
     # áp dụng filter
     if status_filter == "completed":
-        appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
+        # Với KTV: coi cả ONGOING (đã làm xong, chờ lễ tân) và DONE là "Completed"
+        appt_qs = appt_qs.filter(
+            status__in=[Appointment.Status.ONGOING, Appointment.Status.DONE]
+        )
+
     elif status_filter == "all":
         # không filter thêm
         pass
+
     else:
         # UPCOMING (mặc định):
-        # - chưa DONE
+        # - chưa làm xong (loại ONGOING & DONE)
         # - ngày hẹn lớn hơn hôm nay
         #   hoặc cùng ngày hôm nay nhưng giờ >= hiện tại
-        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE).filter(
+        appt_qs = appt_qs.exclude(
+            status__in=[Appointment.Status.ONGOING, Appointment.Status.DONE]
+        ).filter(
             Q(appointment_date__gt=today) |
             Q(appointment_date=today, appointment_time__gte=now_t)
         )
@@ -1620,10 +1637,14 @@ def staff_appointments(request):
         appt = get_object_or_404(Appointment, pk=appt_id, staff_lines__staff=staff)  # <-- staff_lines
 
         if action == "mark_completed":
-            appt.status = Appointment.Status.DONE
+            # ❗ KTV chỉ đánh dấu đã xong dịch vụ,
+            # vẫn để trạng thái ở mức chờ lễ tân check-out
+            appt.status = Appointment.Status.ONGOING
             appt.save(update_fields=["status"])
-            _award_loyalty_for_appointment(appt)
-            messages.success(request, "Đã đánh dấu hoàn thành.")
+            messages.success(
+                request,
+                "completed"
+            )
         elif action == "mark_uncompleted":
             appt.status = Appointment.Status.ONGOING
             appt.save(update_fields=["status"])

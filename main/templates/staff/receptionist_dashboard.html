@@ -4,7 +4,14 @@
 {% block title %}Receptionist Dashboard · Glamup Nails{% endblock %}
 
 {% block head_extra %}
-<style>
+
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-3 col-md-4">
+    {% include 'includes/_sidebar_staff.html' with active='dashboard' %}
+  </div><style>
   :root{ --brand:#a5aa7f; --bg:#f6f5ec; }
   body{ background:var(--bg); font-family:'Nunito',sans-serif; }
   .card{ border:2px solid #cfd3a9; border-radius:12px; }
@@ -16,16 +23,9 @@
   .chip-ongoing { background-color:#ff9800; color:#fff; }
   .chip-done { background-color:#4caf50; color:#fff; }
 </style>
-{% endblock %}
-
-{% block content %}
-<div class="row g-4">
-  <div class="col-lg-3 col-md-4">
-    {% include 'includes/_sidebar_staff.html' with active='dashboard' %}
-  </div>
 
   <div class="col-lg-9 col-md-8">
-    <h1 class="h4 mb-4 text-center">BẢNG ĐIỀU KHIỂN LỄ TÂN</h1>
+    <h1 class="h4 mb-4 text-center">RECEPTIONIST DASHBOARD</h1>
 
     {% include "includes/_messages.html" %}
 
@@ -55,23 +55,23 @@
     <div class="row g-3 mb-4">
       <div class="col-md-4">
         <div class="card p-3 bg-light">
-          <p class="text-muted mb-1 small">Lịch hẹn cần theo dõi</p>
+          <p class="text-muted mb-1 small">Total Appointments Today</p>
           <p class="h3 fw-bold text-danger">{{ appointments|length }}</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="card p-3 bg-light">
-          <p class="text-muted mb-1 small">Thêm khách hàng mới</p>
+          <p class="text-muted mb-1 small">Add New Customer</p>
           <a href="#" class="btn btn-sm btn-outline-success w-100">
-            <i class="bi bi-person-plus"></i> Tạo hồ sơ
+            <i class="bi bi-person-plus"></i> Create Profile
           </a>
         </div>
       </div>
       <div class="col-md-4">
         <div class="card p-3 bg-light">
-          <p class="text-muted mb-1 small">Tạo lịch hẹn tại chỗ</p>
+          <p class="text-muted mb-1 small">Create Walk-in Appointment</p>
           <a href="{% url 'main:book' %}" class="btn btn-sm btn-outline-primary w-100">
-            <i class="bi bi-calendar-plus"></i> Đặt lịch nhanh
+            <i class="bi bi-calendar-plus"></i> Quick Booking
           </a>
         </div>
       </div>
@@ -103,15 +103,15 @@
 
               <div class="text-end">
                 {% if appt.status == 'PENDING' %}
-                  <span class="chip chip-pending">Chờ xác nhận</span>
+                  <span class="chip chip-pending">Pending</span>
                 {% elif appt.status == 'CONFIRMED' %}
-                  <span class="chip chip-confirmed">Đã xác nhận</span>
+                  <span class="chip chip-confirmed">Confirmed</span>
                 {% elif appt.status == 'ARRIVED' %}
-                  <span class="chip chip-arrived">Đã đến</span>
+                  <span class="chip chip-arrived">Arrived</span>
                 {% elif appt.status == 'ONGOING' %}
-                  <span class="chip chip-ongoing">Đang làm</span>
+                  <span class="chip chip-ongoing">In Progress</span>
                 {% elif appt.status == 'DONE' %}
-                  <span class="chip chip-done">Hoàn thành</span>
+                  <span class="chip chip-done">Completed</span>
                 {% endif %}
 
                 <div class="mt-2 d-grid gap-1">
@@ -130,7 +130,7 @@
         {% else %}
           <div class="text-center py-4 text-muted">
             <i class="bi bi-emoji-smile fs-3"></i>
-            <p class="mb-0">Không có lịch hẹn nào cần theo dõi hôm nay.</p>
+            <p class="mb-0">No appointments to manage today.</p>
           </div>
         {% endif %}
       </div>
