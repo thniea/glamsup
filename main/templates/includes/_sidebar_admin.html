@@ -52,7 +52,7 @@
     <img src="{{ staff_avatar_url|default:'/static/img/ảnh_người_1.jpg' }}"
          class="bo-avatar" alt="avatar">
     <div>
-      <div class="bo-role small">Staff</div>
+      <div class="bo-role small">Admin</div>
       <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
     </div>
   </div>
@@ -62,14 +62,14 @@
     <!-- 1. Dashboard -->
     <a class="bo-item {% if active == 'dashboard' %}active{% endif %}"
        href="{% url 'main:admin_dashboard' %}">
-      <span class="bo-ic"><i class="bi bi-house-door"></i></span>
+      <span class="bo-ic"><i class="bi bi-bar-chart"></i></span>
       Dashboard
     </a>
 
     <!-- 2. Employee -->
     <a class="bo-item {% if active == 'employee' %}active{% endif %}"
        href="{% url 'main:admin_employee' %}">
-      <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
+      <span class="bo-ic"><i class="bi bi-people"></i></span>
       Employee
     </a>
 
@@ -83,7 +83,7 @@
     <!-- 4. Service -->
     <a class="bo-item {% if active == 'service' %}active{% endif %}"
        href="{% url 'main:admin_service' %}">
-      <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
+      <span class="bo-ic"><i class="bi bi-heart"></i></span>
       Service
     </a>
 
@@ -97,17 +97,10 @@
     <!-- 6. Feedback -->
     <a class="bo-item {% if active == 'feedback' %}active{% endif %}"
        href="{% url 'main:admin_feedback' %}">
-      <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
+      <span class="bo-ic"><i class="bi-chat-dots"></i></span>
       Feedback
     </a>
-
-    <!-- 7. Log out -->
-    <a class="bo-item" href="#" id="logout-link">
-      <span class="bo-ic"><i class="bi bi-box-arrow-right"></i></span>
-      Log out
-    </a>
   </nav>
-
 
 </div>
 
