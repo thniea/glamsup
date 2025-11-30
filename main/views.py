@@ -2397,5 +2397,13 @@ def _award_loyalty_for_appointment(appt: Appointment):
     tx = LoyaltyTransaction.objects.create(
         customer=appt.customer,
         appointment=appt,
-        type=LoyaltyTransaction
+        type=LoyaltyTransaction.Type.EARN,
+        points=pts,
+        balance_after=lp.current_points,
+        description=f"Tích {pts} điểm cho lịch {f'BK{appt.id:06d}'}",
+    )
 
+    appt.loyalty_awarded = True
+    appt.save(update_fields=["loyalty_awarded"])
+
+#tsttxuanha
