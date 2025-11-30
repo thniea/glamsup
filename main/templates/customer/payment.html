@@ -94,9 +94,9 @@
         <h5 class="text-center fw-800 mb-3">QR Code</h5>
         <div class="qr-box mb-3">
           <img
-            src="{{ bank.qr_url|default:'/static/images/qr.png' }}"
-            alt="QR"
-            style="max-height:200px;max-width:200px;">
+            src="{% static 'img/QRcode.jpg' %}"
+            alt="QR Code"
+            style="max-height:200px; max-width:200px;">
         </div>
 
         <div class="soft p-3">
@@ -131,3 +131,5 @@
   </div>
 </div>
 {% endblock %}
+
+

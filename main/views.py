@@ -2312,7 +2312,8 @@ def admin_schedule_review(request):
 @login_required
 @user_passes_test(is_admin)
 def admin_feedback(request):
-    q = (request.GET.get("q") or "").strip()
+    # CHANGE 1: lấy ngày từ query string (vd: ?date=2025-11-13)
+    date_str = (request.GET.get("date") or "").strip()
 
     fb_qs = (
         Review.objects
@@ -2320,17 +2321,18 @@ def admin_feedback(request):
         .order_by("-review_date")
     )
 
-    if q:
-        fb_qs = fb_qs.filter(
-            Q(customer__full_name__icontains=q) |
-            Q(customer__username__icontains=q) |
-            Q(service__service_name__icontains=q) |
-            Q(comment__icontains=q)
-        )
+    if date_str:
+        try:
+            from datetime import datetime  # thường file này đã import rồi
+            filter_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            fb_qs = fb_qs.filter(review_date=filter_date)
+        except ValueError:
+            # ngày sai format thì bỏ qua, trả full list
+            pass
 
     return render(request, "admin_site/feedback.html", {
         "feedback_list": fb_qs,
-        "q": q,
+        "date": date_str,  # CHANGE 3: trả lại để giữ giá trị trong ô lọc
     })
 @never_cache
 @login_required
