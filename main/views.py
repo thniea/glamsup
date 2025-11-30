@@ -700,22 +700,42 @@ def _service_thumb(svc):
 @user_passes_test(is_customer)
 def my_appointments(request):
     """
-    Trang lịch hẹn của KH (dữ liệu thật):
-      - Hiển thị 20 lịch hẹn gần nhất (mới nhất lên đầu)
-      - Cho phép hủy nếu còn ≥ 3h và trạng thái còn PENDING/CONFIRMED
-      - Hiển thị nút Feedback nếu DONE mà chưa có đánh giá
+    Trang lịch hẹn của KH:
+      - Phần trên: Upcoming (các lịch tương lai, chưa DONE/CANCELED)
+      - Phần dưới: Completed (các lịch đã DONE)
     """
-    qs = (
+    today = timezone.localdate()
+    now_t = timezone.localtime().time()
+
+    base_qs = (
         Appointment.objects
         .select_related("branch")
         .prefetch_related("service_lines__service")
         .filter(customer=request.user)
-        .order_by("-appointment_date", "-appointment_time")[:20]
+    )
+
+    # ===== UPCOMING =====
+    upcoming_qs = (
+        base_qs
+        .exclude(status__in=[Appointment.Status.DONE,
+                             Appointment.Status.CANCELED])
+        .filter(
+            Q(appointment_date__gt=today) |
+            Q(appointment_date=today, appointment_time__gte=now_t)
+        )
+        .order_by("appointment_date", "appointment_time")
+    )
+
+    # ===== COMPLETED =====
+    completed_qs = (
+        base_qs
+        .filter(status=Appointment.Status.DONE)
+        .order_by("-appointment_date", "-appointment_time")
     )
 
     now = timezone.now()
-    bookings = []
-    for appt in qs:
+
+    def _map_booking(appt):
         # thời điểm bắt đầu (aware)
         start_dt = timezone.make_aware(
             datetime.combine(appt.appointment_date, appt.appointment_time),
@@ -724,8 +744,9 @@ def my_appointments(request):
 
         # được hủy nếu > 3h và đang chờ/xác nhận
         can_cancel = (
-            (start_dt - now).total_seconds() > 3 * 3600 and
-            appt.status in [Appointment.Status.PENDING, Appointment.Status.CONFIRMED]
+            (start_dt - now).total_seconds() > 3 * 3600
+            and appt.status in [Appointment.Status.PENDING,
+                                Appointment.Status.CONFIRMED]
         )
 
         # dòng service đầu (đủ cho thẻ)
@@ -740,7 +761,7 @@ def my_appointments(request):
         # đã đánh giá?
         has_review = Review.objects.filter(appointment=appt).exists()
 
-        bookings.append({
+        return {
             "id": appt.id,
             "code": f"BK{appt.id:06d}",
             "service": {
@@ -750,17 +771,21 @@ def my_appointments(request):
             },
             "branch": {"name": appt.branch.name if appt.branch else "—"},
             "start_at": start_dt,
-            "status": appt.status,                # 'PENDING' / 'CONFIRMED' / ...
+            "status": appt.status,
             "status_label": appt.get_status_display(),
-            "payment_status": pay_status,         # 'PAID' / 'UNPAID' / None
+            "payment_status": pay_status,
             "has_review": has_review,
             "can_cancel": can_cancel,
             "cancel_url": reverse("main:cancel_appointment", args=[appt.id]) if can_cancel else "",
-        })
+        }
+
+    upcoming = [_map_booking(ap) for ap in upcoming_qs]
+    completed = [_map_booking(ap) for ap in completed_qs]
 
     return render(request, "customer/my_appointments.html", {
-        "bookings": bookings,
-        "now": now,  # dùng cho JS demo nếu cần
+        "upcoming": upcoming,
+        "completed": completed,
+        "now": now,
     })
 
 

@@ -46,9 +46,40 @@
   .dot-gray{ background:#bdbdbd; } .dot-red{ background:#e45757; }
 
   .btn{ border:2px solid #2b3220; background:#fff; border-radius:12px; padding:8px 14px; font-weight:900; text-decoration:none; color:#2b3220; }
-  .btn.solid{ background:var(--brand); border-color:var(--brand); color:#fff; }
+  .btn.solid{
+    background: var(--brand);         /* olive */
+    border: none;
+    color: #fff;
+    padding: 10px 22px;
+    font-weight: 800;
+    border-radius: 40px;              /* bo tròn giống nút Save */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+    transition: all .2s ease;
+}
+
+.btn.solid:hover{
+    background: #8c9366;              /* olive đậm hơn khi hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.12);
+}
+
   .btn.warn{ border-color:#b24a3c; color:#b24a3c; }
   .empty{ background:#fff; border:2px dashed var(--edge); border-radius:16px; padding:24px; text-align:center; }
+  .section-header {
+    background: #e8ecd9; /* xanh olive nhạt hợp brand */
+    border: 2px solid var(--edge);
+    border-radius: 14px;
+    padding: 10px 20px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--brand-strong);
+    text-align: center;
+    width: 100%;
+    max-width: 640px;
+    margin: 40px auto 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
 </style>
 {% endblock %}
 
@@ -64,77 +95,128 @@
   </div>
 <div class="col-md-8 col-lg-9 d-grid gap-4">
     <!-- Main -->
-    <section class="appt-main">
-      <h1 class="page-title">My Appointments</h1>
 
-      {% if bookings %}
-      <div class="cards-grid">
-        {% for ap in bookings %}
-        <article class="appt-card">
-          <header class="card-header">
-            <span class="pill">
-              {% if ap.status == 'DONE' %}Completed
-              {% elif ap.status == 'CONFIRMED' %}Upcoming
-              {% elif ap.status == 'CANCELED' %}Canceled
-              {% elif ap.status == 'IN_PROGRESS' %}In progress
-              {% else %}{{ ap.status_label }}{% endif %}
-            </span>
-            <span class="float-end small">#{{ ap.code }}</span>
-          </header>
+      {# ===== UPCOMING ===== #}
+      <section class="appt-main">
+      <h2 class="page-title">UPCOMING APPOINTMENTS</h2>
+      {% if upcoming %}
+        <div class="cards-grid mb-4">
+          {% for ap in upcoming %}
+          <article class="appt-card">
+            <header class="card-header">
+              <span class="pill">
+                {% if ap.status == 'DONE' %}Completed
+                {% elif ap.status == 'CONFIRMED' %}Upcoming
+                {% elif ap.status == 'CANCELED' %}Canceled
+                {% elif ap.status == 'IN_PROGRESS' %}In progress
+                {% else %}{{ ap.status_label }}{% endif %}
+              </span>
+              <span class="float-end small">#{{ ap.code }}</span>
+            </header>
 
-          <div class="card-body">
-            <div class="top-row">
-              <img src="{{ ap.service.image_url }}" class="thumb" alt="">
-              <div class="title">{{ ap.service.name }}</div>
-              <div class="price">{{ ap.service.price|intcomma }} VND</div>
-            </div>
+            <div class="card-body">
+              <div class="top-row">
+                <img src="{{ ap.service.image_url }}" class="thumb" alt="">
+                <div class="title">{{ ap.service.name }}</div>
+                <div class="price">{{ ap.service.price|intcomma }} VND</div>
+              </div>
 
-            <div class="field">
-              <label>Date &amp; Time</label>
-              <div class="inline-2">
-                <input type="text" value="{{ ap.start_at|date:'d/m/Y' }}" readonly>
-                <input type="text" value="{{ ap.start_at|date:'H:i' }}" readonly>
+              <div class="field">
+                <label>Date &amp; Time</label>
+                <div class="inline-2">
+                  <input type="text" value="{{ ap.start_at|date:'d/m/Y' }}" readonly>
+                  <input type="text" value="{{ ap.start_at|date:'H:i' }}" readonly>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Location</label>
+                <input type="text" value="{{ ap.branch.name }}" readonly>
               </div>
             </div>
 
-            <div class="field">
-              <label>Location</label>
-              <input type="text" value="{{ ap.branch.name }}" readonly>
-            </div>
-          </div>
+            <footer class="card-footer">
+              <div class="status">
+                {% if ap.status == 'DONE' %}
+                  <span class="dot dot-gray"></span> Completed
+                {% elif ap.status == 'CONFIRMED' %}
+                  <span class="dot dot-green"></span> Confirmed
+                {% elif ap.status == 'CANCELED' %}
+                  <span class="dot dot-red"></span> Canceled
+                {% elif ap.status == 'PENDING' %}
+                  <span class="dot dot-yellow"></span> Pending
+                {% else %}
+                  <span class="dot"></span> {{ ap.status_label }}
+                {% endif %}
+              </div>
 
-          <footer class="card-footer">
-            <div class="status">
-              {% if ap.status == 'DONE' %}
-                <span class="dot dot-gray"></span> Completed
-              {% elif ap.status == 'CONFIRMED' %}
-                <span class="dot dot-green"></span> Confirmed
-              {% elif ap.status == 'CANCELED' %}
-                <span class="dot dot-red"></span> Canceled
-              {% elif ap.status == 'PENDING' %}
-                <span class="dot dot-yellow"></span> Pending
-              {% else %}
-                <span class="dot"></span> {{ ap.status_label }}
-              {% endif %}
-            </div>
-
-            <div class="cta">
-              {% if ap.status == 'DONE' and not ap.has_review %}
-                <a class="btn solid" href="{% url 'main:customer_feedback' ap.id %}">Give Feedback</a>
-              {% elif ap.can_cancel %}
-                <a class="btn warn" href="{{ ap.cancel_url }}" onclick="return confirm('Cancel this appointment?');">Cancel &gt;</a>
-              {% else %}
-                <span class="pill">—</span>
-              {% endif %}
-            </div>
-          </footer>
-        </article>
-        {% endfor %}
-      </div>
-      {% else %}
-        <div class="empty">
-          Bạn chưa có lịch hẹn nào. <a class="btn solid ms-2" href="{% url 'main:services' %}">Đặt lịch ngay</a>
+              <div class="cta">
+                {% if ap.status == 'DONE' and not ap.has_review %}
+                  <a class="btn solid" href="{% url 'main:customer_feedback' ap.id %}">Give Feedback</a>
+                {% elif ap.can_cancel %}
+                  <a class="btn warn" href="{{ ap.cancel_url }}" onclick="return confirm('Cancel this appointment?');">Cancel &gt;</a>
+                {% else %}
+                  <span class="pill">—</span>
+                {% endif %}
+              </div>
+            </footer>
+          </article>
+          {% endfor %}
         </div>
+      {% else %}
+        <p class="text-center text-muted mb-4">Bạn chưa có lịch hẹn sắp tới.</p>
+      {% endif %}
+
+      {# ===== COMPLETED ===== #}
+      <section class="appt-main">
+      <h2 class="page-title">COMPLETED APPOINTMENTS</h2>
+      {% if completed %}
+        <div class="cards-grid">
+          {% for ap in completed %}
+          <article class="appt-card">
+            <header class="card-header">
+              <span class="pill">Completed</span>
+              <span class="float-end small">#{{ ap.code }}</span>
+            </header>
+
+            <div class="card-body">
+              <div class="top-row">
+                <img src="{{ ap.service.image_url }}" class="thumb" alt="">
+                <div class="title">{{ ap.service.name }}</div>
+                <div class="price">{{ ap.service.price|intcomma }} VND</div>
+              </div>
+
+              <div class="field">
+                <label>Date &amp; Time</label>
+                <div class="inline-2">
+                  <input type="text" value="{{ ap.start_at|date:'d/m/Y' }}" readonly>
+                  <input type="text" value="{{ ap.start_at|date:'H:i' }}" readonly>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Location</label>
+                <input type="text" value="{{ ap.branch.name }}" readonly>
+              </div>
+            </div>
+
+            <footer class="card-footer">
+              <div class="status">
+                <span class="dot dot-gray"></span> Completed
+              </div>
+              <div class="cta">
+                {% if not ap.has_review %}
+                  <a class="btn solid" href="{% url 'main:customer_feedback' ap.id %}">Give Feedback</a>
+                {% else %}
+                  <span class="pill">Already rated</span>
+                {% endif %}
+              </div>
+            </footer>
+          </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-center text-muted">Chưa có lịch hẹn nào đã hoàn thành.</p>
       {% endif %}
     </section>
   </div>
