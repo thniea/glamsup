@@ -68,8 +68,8 @@
           </div>
 
           <div class="mt-4 d-flex gap-2">
-            <a href="{% url 'main:admin_employee' %}" class="btn btn-outline-secondary">Back</a>
-            <button class="btn btn-primary">Save changes</button>
+            <a href="{% url 'main:admin_employee' %}" class="btn btn-outline-brand">Back</a>
+            <button class="btn btn-brand">Save changes</button>
           </div>
         </form>
 
@@ -78,7 +78,7 @@
         <form method="post" class="d-inline" onsubmit="return confirm('Khoá/Mở tài khoản này?');">
           {% csrf_token %}
           <input type="hidden" name="action" value="toggle_active">
-          <button class="btn btn-outline-dark">
+          <button class="btn btn-outline-brand">
             {% if obj.is_active %}Deactivate{% else %}Activate{% endif %}
           </button>
         </form>

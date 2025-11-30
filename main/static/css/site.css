@@ -1,7 +1,3 @@
-/* =========================
-   Glamup Nails — Global Style System
-   ========================= */
-
 /* ---------- Design tokens ---------- */
 :root{
   --bg: #fffbf5;         /* nền chính */
@@ -41,7 +37,7 @@ a{
   text-decoration: none;
   transition: color .2s ease;
 }
-a:hover{ text-decoration: underline; color: #8f936d; }
+
 
 h1,h2,h3,h4,h5,h6{
   color: var(--ink);
@@ -77,17 +73,20 @@ footer{
 /* ---------- Buttons ---------- */
 .btn-brand{
   background: var(--brand);
-  color: #fff;
-  font-weight: 800;
-  border: none;
-  border-radius: 999px;
-  padding: .55rem 1.2rem;
-  box-shadow: var(--shadow);
-  transition: all .2s ease;
+    color:#fff;
+    font-weight:800;
+    border:none;
+    border-radius: 999px;
+    padding:8px 20px;
+    box-shadow: 0 3px 10px rgba(114,145,70,.25);
+    transition: .25s ease;
 }
+
+/* Hover nút */
 .btn-brand:hover{
-  filter: brightness(.95);
-  color: #fff;
+    background: #7f8458;
+    color:#fff;
+    transform: translateY(-2px);
 }
 
 .btn-outline-brand{
@@ -102,6 +101,7 @@ footer{
 .btn-outline-brand:hover{
   background: var(--brand);
   color: #fff;
+  transform: translateY(-2px);
 }
 
 .btn-soft{
@@ -111,8 +111,14 @@ footer{
   border-radius: 999px;
   padding: .5rem 1rem;
   font-weight: 800;
+  box-shadow: 0 3px 10px rgba(114,145,70,.25);
+  transition: .25s ease;
 }
-
+.btn-soft:hover{
+    background: #7f8458;
+    color:#fff;
+    transform: translateY(-2px);
+}
 .btn-sm{ padding: .35rem .8rem; font-size: .95rem; }
 .btn-lg{ padding: .7rem 1.4rem; font-size: 1.05rem; }
 
@@ -233,4 +239,43 @@ label{
   .btn-lg{ font-size: 1rem; }
   .card-soft{ padding: 1rem; }
   h1,h2,h3{ font-size: 1.3rem; }
+}
+
+/* ===============================
+   NAVBAR HOVER + ACTIVE EFFECT
+================================*/
+
+.nav-link-ink {
+  position: relative;
+  color: #2b3220;
+  font-weight: 600;
+  transition: all 0.22s ease;
+}
+
+/* Hover: đậm hơn + scale + đổi màu olive */
+.nav-link-ink:hover {
+  color: #8b9361 !important;   /* màu olive đậm thương hiệu */
+  transform: scale(1.08);
+  font-weight: 700;
+}
+
+
+
+.nav-link-ink:hover::after {
+  width: 100%;
+}
+
+/* ACTIVE STATE: hiển thị khung bo xung quanh chữ khi đang ở trang đó */
+.active-nav {
+  color: #8b9361 !important;
+  font-weight: 800 !important;
+  padding: 6px 12px;
+  border: 2px solid #8b9361;
+  border-radius: 50px;
+  background: #ffffff; /* nền nhạt olive */
+}
+
+/* Khi active thì không cần underline */
+.active-nav::after {
+  width: 0 !important;
 }

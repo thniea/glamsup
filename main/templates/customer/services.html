@@ -6,7 +6,7 @@
 {% block head_extra %}
 <style>
   :root{
-    --brand:#a5aa7f;         /* olive nhạt */
+    --brand:#2F5D38;         /* olive nhạt */
     --brand-strong:#8b9361;  /* olive đậm cho viền & nút */
     --ink:#2b3220;
     --edge:#d7ddc1;
@@ -44,8 +44,12 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:640px){ .grid{grid-template-columns:1fr} }
-
-  .card{border:3px solid var(--brand-strong);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.04)}
+.card:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+    border-color: var(--brand);
+}
+  .card{border:3px solid var(--brand-strong);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.04); transition: all .25s ease;}
   .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}         /* Ảnh vuông */
   .body{padding:8px 12px}                                                     /* mô tả gọn */
   .c-row{display:flex;justify-content:space-between;gap:10px;align-items:center} /* tránh đụng .row của footer */
@@ -54,11 +58,7 @@
   .c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
   .stars{color:#f5b800;font-size:16px;letter-spacing:2px;line-height:1}
 
-  .btn-outline{
-    border:2px solid var(--brand-strong);background:#fff;color:#8b9361;
-    font-weight:900;border-radius:12px;padding:8px 14px;text-decoration:none;display:inline-block
-  }
-  .btn-outline:hover{background:#8b9361;color:#fff}
+  /* ❌ đã bỏ .btn-outline cũ – dùng hệ btn chung trong base.css */
 
   .hide{display:none !important}
   .empty{padding:18px;border:2px dashed var(--brand-strong);border-radius:12px;background:#fff}
@@ -128,7 +128,11 @@
                     {% endfor %}
                   {% endwith %}
                 </div>
-                <a class="btn-outline" href="{% url 'main:service_detail' s.slug %}">Book Now</a>
+                {# dùng hệ button chung: pill radius + shadow + hover translate #}
+                <a class="btn btn-brand btn-sm"
+                   href="{% url 'main:service_detail' s.slug %}">
+                  Book Now
+                </a>
               </div>
             </div>
           </article>

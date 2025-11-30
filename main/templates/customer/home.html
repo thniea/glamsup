@@ -5,13 +5,6 @@
 
 {% block head_extra %}
 <style>
-  :root{
-    --brand:#a5aa7f;
-    --bg:#fffbf5;
-    --olive:#2b3220;
-    --sage:#b7c099;
-  }
-
 
   /* ========== HERO ========== */
   .hero{ padding:45px 0 24px; }
@@ -82,24 +75,89 @@
 }
 
   /* ========== HOT SERVICES ========== */
-  .hot-card{
-    background:#fff;
-    border-radius:16px;
-    overflow:hidden;
-    text-align:center;
-    box-shadow:0 2px 5px rgba(0,0,0,.06);
-    padding-bottom:12px;
-  }
-  .hot-card img{ width:100%; height:auto; display:block; aspect-ratio:4/3; object-fit:cover; }
-  .hot-card .name{ font-weight:800; margin-top:10px; color:var(--olive); }
-  .btn-olive{
-    background:var(--brand);
+.hot-card{
+    background: #FFFFFF; /* đổi sang trắng để nổi */
+    border: 1.5px solid var(--mint-border);
+    border-radius: 18px;
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06); /* shadow sâu hơn */
+    padding-bottom: 18px;
+    transition: all .25s ease;
+}
+
+/* Hover effect – cho cảm giác nổi lên */
+.hot-card:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+    border-color: var(--brand);
+}
+
+/* Image */
+.hot-card img{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    display:block;
+}
+
+/* Service name */
+.hot-card .name{
+    font-weight: 900;
+    margin-top: 14px;
+    font-size: 1.1rem;
+    color: var(--brand);
+}
+
+/* Price & rating */
+.hot-card .meta{
+    color: var(--muted);
+    font-size: .95rem;
+    margin: 4px 0 14px;
+}
+
+/* Button group */
+.hot-card .btn-wrap{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Button chính */
+.btn-olive{
+    background: var(--brand);
     color:#fff;
     font-weight:800;
     border:none;
-    border-radius:8px;
-    padding:8px 16px;
-  }
+    border-radius: 999px;
+    padding:8px 20px;
+    box-shadow: 0 3px 10px rgba(114,145,70,.25);
+    transition: .25s ease;
+}
+
+/* Hover nút */
+.btn-olive:hover{
+    background: var(--brand-light);
+    color:#fff;
+    transform: translateY(-2px);
+}
+
+/* Nút phụ (View details) */
+.btn-olive-outline{
+    background: transparent;
+    color: var(--brand);
+    border: 2px solid var(--brand);
+    border-radius: 999px;
+    padding:8px 20px;
+    font-weight:800;
+    transition: .25s ease;
+}
+
+.btn-olive-outline:hover{
+    background: var(--brand);
+    color:#fff;
+    transform: translateY(-2px);
+}
   .btn-olive:hover{ filter:brightness(.9); }
 
   /* ========== COLLECTION ========== */
@@ -255,8 +313,8 @@
               {% if s.avg_rating and s.avg_rating > 0 %} · ★ {{ s.avg_rating }}{% endif %}
             </div>
             <div class="mt-2 d-flex justify-content-center gap-2">
-              <a href="{% url 'main:service_detail' s.slug %}" class="btn btn-olive">View details</a>
-              <a href="{% url 'main:book' %}?service={{ s.slug }}" class="btn btn-olive">Book now</a>
+              <a href="{% url 'main:service_detail' s.slug %}" class="btn btn-brand">View details</a>
+              <a href="{% url 'main:book' %}?service={{ s.slug }}" class="btn btn-brand">Book now</a>
             </div>
           </div>
         </div>
