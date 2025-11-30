@@ -77,28 +77,7 @@
       </div>
     </div>
 
-    <!-- Upcoming Appointments -->
-    <div class="panel">
-      <div class="panel-header">
-        <span>Upcoming Appointments</span>
-        <div class="panel-actions"></div>
-      </div>
-      <div class="panel-body">
-        {% if next_booking %}
-          {{ next_booking.service_name }} — {{ next_booking.start_at|date:"d/m/Y, H:i" }}
-          — At {{ next_booking.branch_name }}
-          <div class="mt-2">
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'main:my_appointments' %}">View all</a>
-          </div>
-        {% else %}
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="text-muted">You don’t have any upcoming appointments.</span>
-            <a class="btn btn-brand btn-sm" href="{% url 'main:services' %}">Book now</a>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'main:my_appointments' %}">My appointments</a>
-          </div>
-        {% endif %}
-      </div>
-    </div>
+
 
     <!-- Personal Information -->
     <div class="panel">
