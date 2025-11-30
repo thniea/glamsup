@@ -111,7 +111,7 @@
         {% if upcoming and upcoming|length %}
           {% for ap in upcoming %}
             <div class="item mb-2">
-              {{ ap.service_name }} — {{ ap.date_display }} — At {{ ap.branch_name }}
+              {{ ap.service_name }} - {{ ap.date_display }} - At {{ ap.branch_name }}
             </div>
           {% endfor %}
         {% else %}

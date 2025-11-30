@@ -39,6 +39,7 @@ urlpatterns = [
     path("account/points/", views.loyalty_history, name="loyalty_history"),
     path("contact/", views.contact_view, name="contact"),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'), # <-- THÊM
+    path("promotion/", views.promotion, name="promotion"),
     # staff
     path('employee/account/', views.staff_account, name='staff_account'),  # Account setting
     path('employee/schedule/', views.staff_schedule, name='staff_schedule'),  # Lịch làm việc

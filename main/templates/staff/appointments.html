@@ -59,10 +59,26 @@
   </div>
 
   <div class="col-lg-9">
-    <div class="toolbar">
+  <div class="toolbar">
       <h1 class="h5 fw-bold m-0">APPOINTMENTS</h1>
-      <button class="sort-btn" type="button"><i class="bi bi-chevron-down"></i> <span>Date</span></button>
+
+      <form method="get" class="m-0">
+          <select name="status" class="sort-btn" onchange="this.form.submit()">
+            <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>
+              Upcoming
+            </option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>
+              Completed
+            </option>
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>
+              All
+            </option>
+          </select>
+      </form>
+
     </div>
+
+
 
     {% include "includes/_messages.html" %}
 
@@ -99,29 +115,36 @@
 
           {# BẮT ĐẦU PHẦN CHỈNH SỬA: Dùng Flexbox để căn chỉnh #}
           <div class="status-row">
-            <div class="status-display d-flex align-items-center gap-2">
-              {% if ap.status == 'DONE' %}
-                <span class="dot" style="width:10px;height:10px;background:#4caf50;border-radius:50%;display:inline-block;"></span>
-                <span class="fw-bold text-success">Đã hoàn thành</span>
-              {% elif ap.status == 'ONGOING' %}
-                <span class="dot" style="width:10px;height:10px;background:#ff9800;border-radius:50%;display:inline-block;"></span>
-                <span class="fw-bold text-warning">Đang thực hiện</span>
-              {% elif ap.status == 'CONFIRMED' %}
-                <span class="dot" style="width:10px;height:10px;background:#9e9e9e;border-radius:50%;display:inline-block;"></span>
-                <span class="fw-bold text-secondary">Đã xác nhận</span>
-              {% else %}
-                <span class="dot" style="width:10px;height:10px;background:#ccc;border-radius:50%;display:inline-block;"></span>
-                <span class="fw-bold text-muted">Chờ xử lý</span>
-              {% endif %}
-            </div>
+              <div class="status-display d-flex align-items-center gap-2">
+                {% if ap.status == 'DONE' %}
+                  <span class="dot" style="width:10px;height:10px;background:#4caf50;border-radius:50%;display:inline-block;"></span>
+                  <span class="fw-bold text-success">Completed</span>
+                {% elif ap.status == 'ONGOING' %}
+                  <span class="dot" style="width:10px;height:10px;background:#ff9800;border-radius:50%;display:inline-block;"></span>
+                  <span class="fw-bold text-warning">In progress</span>
+                {% elif ap.status == 'CONFIRMED' %}
+                  <span class="dot" style="width:10px;height:10px;background:#9e9e9e;border-radius:50%;display:inline-block;"></span>
+                  <span class="fw-bold text-secondary">Confirmed</span>
+                {% else %}
+                  <span class="dot" style="width:10px;height:10px;background:#ccc;border-radius:50%;display:inline-block;"></span>
+                  <span class="fw-bold text-muted">Pending</span>
+                {% endif %}
+              </div>
 
-            <form method="post" class="actions m-0">
-              {% csrf_token %}
-              <input type="hidden" name="id" value="{{ ap.id }}">
-              <button class="pill {% if ap.status != 'DONE' %}is-on{% endif %}" name="action" value="mark_uncompleted">Uncompleted</button>
-              <button class="pill solid {% if ap.status == 'DONE' %}is-on{% endif %}" name="action" value="mark_completed">Completed</button>
-            </form>
+              <form method="post" class="actions m-0">
+                {% csrf_token %}
+                <input type="hidden" name="id" value="{{ ap.id }}">
+                <button
+                  class="pill solid {% if ap.status == 'DONE' %}is-on{% endif %}"
+                  name="action"
+                  value="mark_completed"
+                  {% if ap.status == 'DONE' %}disabled{% endif %}
+                >
+                  Completed
+                </button>
+              </form>
           </div>
+
           {# KẾT THÚC PHẦN CHỈNH SỬA #}
 
         </article>

@@ -193,15 +193,53 @@ def home(request):
         "price": float(s.price or 0),
     } for s in coll_qs]
 
+    # HOME REVIEWS – lấy 3 feedback PUBLISHED mới nhất - 27/11
+    rv_qs = (
+        Review.objects
+        .filter(status=Review.Status.PUBLISHED)
+        .select_related("customer", "service")
+        .order_by("-review_date")[:3]
+    )
+
+    home_reviews = []
+    for rv in rv_qs:
+        customer = rv.customer
+        avatar_url = "/static/img/avatar-placeholder.png"
+        if getattr(customer, "avatar", None) and getattr(customer.avatar, "url", None):
+            avatar_url = customer.avatar.url
+
+        home_reviews.append({
+            "customer_name": (customer.full_name or customer.username) if customer else "Customer",
+            "comment": rv.comment or "",
+            "rating": float(rv.rating or 0),
+            "stars": int(round(float(rv.rating or 0))),  # số sao nguyên để render
+            "avatar": avatar_url,
+            "service_name": rv.service.service_name if rv.service else "",
+        })
+
     return render(
         request,
         "customer/home.html",
         {
             "featured_services": featured_services,
             "collection": collection,
+            "home_reviews": home_reviews,  # truyền ra template
         }
     )
 
+def promotion(request):
+
+    promo = {
+        "title": "December Promotion - 20% Off Gel Nail Services",
+        "subtitle": "Special discount for customers booking during September.",
+        "content": (
+            "Enjoy 20% off all gel nail services when booking through the GlamUp Nails website. "
+            "Applicable from September 1st to September 30th across all branches. "
+            "This promotion cannot be combined with other offers or discounts."
+        ),
+        "note": "Please show the promotion code at the reception desk upon arrival.",
+    }
+    return render(request, "customer/promotion.html", {"promo": promo})
 
 def login_view(request):
     form = LoginForm(request=request, data=request.POST or None)
@@ -1069,13 +1107,17 @@ def _map_appt_for_rx(appt):
 @user_passes_test(is_receptionist)
 def receptionist_dashboard(request):
     """
-    Lễ tân: hiển thị lịch hẹn từ hôm nay đến 7 ngày tới, trừ DONE/CANCELED.
+     Lễ tân: hiển thị lịch hẹn theo ngày (mặc định: hôm nay).
+    Có thể chọn ngày khác bằng ?date=YYYY-MM-DD
     """
-    today = timezone.localdate()
-    end = today + timedelta(days=7)
+    try:
+        date_str = (request.GET.get("date") or "").strip()
+        selected_date = _date.fromisoformat(date_str) if date_str else timezone.localdate()
+    except ValueError:
+        selected_date = timezone.localdate()
 
     qs = (Appointment.objects
-          .filter(appointment_date__range=(today, end))
+          .filter(appointment_date=selected_date)
           .exclude(status__in=[Appointment.Status.DONE, Appointment.Status.CANCELED])
           .select_related("branch", "customer")
           # ✅ đúng related_name
@@ -1086,7 +1128,8 @@ def receptionist_dashboard(request):
 
     return render(request, "staff/receptionist_dashboard.html", {
         "appointments": appointments_ctx,
-        "today": today,
+        "today": timezone.localdate(),   # để làm nút “Hôm nay”
+        "selected_date": selected_date,  # ngày đang xem
         "is_receptionist": True,
         "is_technician": False,
     })
@@ -1264,11 +1307,40 @@ def staff_account(request):
         "avatar_url": avatar_url,
     }
 
+    # ========= NEW: Upcoming appointments của nhân viên =========
+    today = timezone.localdate()
+    now_t = timezone.localtime().time()
+
+    up_qs = (
+        Appointment.objects
+        .filter(staff_lines__staff=u)
+        .exclude(status=Appointment.Status.DONE)
+        .exclude(status=Appointment.Status.CANCELED)
+        .filter(
+            Q(appointment_date__gt=today) |
+            Q(appointment_date=today, appointment_time__gte=now_t)
+        )
+        .select_related("branch")
+        .prefetch_related("service_lines__service")
+        .order_by("appointment_date", "appointment_time")[:5]  # lấy tối đa 5 lịch sắp tới
+    )
+
+    upcoming = []
+    for ap in up_qs:
+        line = ap.service_lines.select_related("service").first()
+        svc = getattr(line, "service", None)
+
+        upcoming.append({
+            "service_name": getattr(svc, "service_name", "Service"),
+            "date_display": f"{ap.appointment_date.strftime('%d/%m')} {ap.appointment_time.strftime('%H:%M')}",
+            "branch_name": ap.branch.name if ap.branch else "-",
+        })
+
     return render(request, "staff/staff_account.html", {
         "staff": staff_ctx,
-        "upcoming": [],
+        "upcoming": upcoming,
         "is_receptionist": is_receptionist(request.user),
-        "is_technician": is_technician(request.user)
+        "is_technician": is_technician(request.user),
     })
 # ====== RECEPTIONIST: Inbox (xem liên hệ khách gửi) ======
 
@@ -1448,7 +1520,7 @@ def staff_schedule(request):
         "is_technician": is_technician(request.user)
     }
     return render(request, "staff/staff_schedule.html", ctx)
-
+from django.db.models import Case, When, Value, IntegerField
 @never_cache
 @login_required
 @user_passes_test(is_staff_user)
@@ -1456,18 +1528,66 @@ def staff_appointments(request):
     """
     KTV xem các lịch hẹn mình được phân công.
     Cho phép đánh dấu Completed / Uncompleted.
+     Filter:
+      - upcoming  (mặc định): các lịch chưa DONE và còn ở hiện tại / tương lai
+      - completed: các lịch đã DONE
+      - all      : tất cả lịch (không phân biệt trạng thái / thời gian)
     """
     staff = request.user
+    # ---- đọc filter từ query string (mặc định: upcoming) ----
+    status_filter = request.GET.get("status", "upcoming")
 
-    # Các lịch của chính nhân viên đang đăng nhập
-    appt_qs = (
-        Appointment.objects
-        .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
-        .select_related("branch", "customer")
-        .prefetch_related("service_lines__service", "payments")
-        .order_by("appointment_date", "appointment_time")
+    today = timezone.localdate()
+    now_t = timezone.localtime().time()
+
+    if is_receptionist(staff):
+        # LỄ TÂN: xem tất cả lịch
+        appt_qs = (
+            Appointment.objects
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service")
+        )
+    else:
+        # Các lịch của chính nhân viên đang đăng nhập
+        appt_qs = (
+            Appointment.objects
+            .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service", "payments")
+
+        )
+    # áp dụng filter
+    if status_filter == "completed":
+        appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
+    elif status_filter == "all":
+        # không filter thêm
+        pass
+    else:
+        # UPCOMING (mặc định):
+        # - chưa DONE
+        # - ngày hẹn lớn hơn hôm nay
+        #   hoặc cùng ngày hôm nay nhưng giờ >= hiện tại
+        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE).filter(
+            Q(appointment_date__gt=today) |
+            Q(appointment_date=today, appointment_time__gte=now_t)
+        )
+        status_filter = "upcoming"  # normalize
+    # Sắp xếp theo trạng thái ưu tiên:
+    # IN_PROGRESS → CONFIRMED → PENDING → DONE
+    status_order = Case(
+        When(status=Appointment.Status.IN_PROGRESS, then=Value(1)),
+        When(status=Appointment.Status.CONFIRMED, then=Value(2)),
+        When(status=Appointment.Status.PENDING, then=Value(3)),
+        When(status=Appointment.Status.DONE, then=Value(4)),
+        default=Value(5),
+        output_field=IntegerField(),
     )
-
+    # Áp dụng sắp xếp theo trạng thái *nếu lọc ALL*
+    if status_filter == "all":
+        appt_qs = appt_qs.order_by(status_order, "appointment_date", "appointment_time")
+    else:
+        # giữ sắp xếp bình thường cho upcoming / completed
+        appt_qs = appt_qs.order_by("appointment_date", "appointment_time")
     appts = []
     for ap in appt_qs:
         # Lấy 1 dòng dịch vụ để hiển thị tên/ảnh/giá
@@ -1512,6 +1632,7 @@ def staff_appointments(request):
 
     return render(request, "staff/appointments.html", {
         "appointments": appts,
+        "status_filter": status_filter,
         "is_receptionist": is_receptionist(request.user),
         "is_technician": is_technician(request.user),
     })
@@ -2406,7 +2527,3 @@ def _award_loyalty_for_appointment(appt: Appointment):
     appt.loyalty_awarded = True
     appt.save(update_fields=["loyalty_awarded"])
 
-#test git pullfgfffcddfdf
-#testttt
-
-#testt Linh1111
