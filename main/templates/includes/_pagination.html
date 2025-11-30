@@ -1,37 +1,122 @@
-{# _pagination.html #}
-{# Nhận vào biến page_obj (đối tượng Page) và tùy chọn q để giữ query search #}
-{% if page_obj %}
-  {% with q=request.GET.q %}
-  <nav class="mt-3" aria-label="Pagination">
-    <ul class="pagination mb-0">
+{# templates/includes/_pagination.html #}
 
-      {# Previous #}
-      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-        <a class="page-link"
-           href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}1{% endif %}"
-           aria-label="Previous">
-          &laquo;
-        </a>
-      </li>
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+  {% with q=request.GET.q %}
+
+  {# Thêm class custom-pagination vào đây #}
+  <nav class="mt-4 custom-pagination" aria-label="Pagination">
+    <ul class="pagination justify-content-center mb-0">
+
+      {# Previous Button #}
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             aria-label="Previous">
+             {# Sử dụng icon mũi tên đơn giản hơn #}
+             <i class="bi bi-chevron-double-left"></i>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true"></span>
+        </li>
+      {% endif %}
 
       {# Page numbers #}
       {% for p in page_obj.paginator.page_range %}
         <li class="page-item {% if p == page_obj.number %}active{% endif %}">
           <a class="page-link"
-             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ p }}">{{ p }}</a>
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ p }}">
+            {{ p }}
+          </a>
         </li>
       {% endfor %}
 
-      {# Next #}
-      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-        <a class="page-link"
-           href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.paginator.num_pages }}{% endif %}"
-           aria-label="Next">
-          &raquo;
-        </a>
-      </li>
+      {# Next Button #}
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+             aria-label="Next">
+            <i class="bi bi-chevron-double-right"></i>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true"></span>
+        </li>
+      {% endif %}
 
     </ul>
   </nav>
   {% endwith %}
 {% endif %}
+
+<style>
+  /* Định nghĩa lại biến màu cục bộ (hoặc bạn đã có trong :root thì có thể bỏ qua dòng này) */
+  .custom-pagination {
+    --bg: #fffbf5;
+    --surface: #fffef9;
+    --brand: #a5aa7f;
+    --ink: #1e2417;
+    --muted: #6b705c;
+    --edge: #cfd3a9;
+  }
+
+  /* Layout container */
+  .custom-pagination .pagination {
+    align-items: center;
+    gap: 8px; /* Khoảng cách rộng hơn xíu cho thoáng */
+  }
+
+  /* Style cơ bản cho các nút tròn */
+  .custom-pagination .page-link {
+    width: 42px;
+    height: 42px;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Dùng màu của bạn */
+    background-color: var(--surface);
+    border: 1.5px solid var(--edge); /* Viền dày hơn xíu cho nét */
+    color: var(--ink);
+
+    font-weight: 600; /* Chữ đậm hơn để dễ đọc trên nền sáng */
+    transition: all 0.3s ease;
+    margin: 0;
+  }
+
+  /* Trạng thái Active (Trang hiện tại) */
+  .custom-pagination .page-item.active .page-link {
+    background-color: var(--brand); /* Màu xanh rêu brand */
+    border-color: var(--brand);
+    color: #ffffff; /* Chữ trắng trên nền xanh rêu rất hợp */
+    box-shadow: 0 4px 6px rgba(165, 170, 127, 0.4); /* Đổ bóng cùng tông màu brand */
+  }
+
+  /* Hiệu ứng Hover (Di chuột) */
+  .custom-pagination .page-link:hover {
+    background-color: var(--edge); /* Chuyển sang màu viền khi hover */
+    color: var(--ink);
+    border-color: var(--brand); /* Viền đậm lên thành màu brand */
+    transform: translateY(-2px); /* Nhảy nhẹ lên 1 chút */
+  }
+
+  /* Nút Previous/Next bị disabled */
+  .custom-pagination .page-item.disabled .page-link {
+    background-color: var(--bg); /* Nền tệp vào background chính */
+    color: var(--muted); /* Chữ màu nhạt */
+    border-color: #e0e0e0;
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+  }
+
+  /* Xóa focus mặc định */
+  .custom-pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(165, 170, 127, 0.25); /* Focus ring màu brand nhạt */
+  }
+</style>
