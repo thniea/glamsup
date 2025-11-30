@@ -38,6 +38,9 @@ from .models import (
     Service, Branch, Review, Appointment, AppointmentService, AppointmentStaff,
     Payment, User, StaffSchedule
 )
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.conf import settings
 
 # ===================== Helpers giữ đúng biến template =====================
 
@@ -1255,12 +1258,95 @@ def check_out(request, pk: int):
 
     #  Cộng điểm loyalty tại bước check-out
     _award_loyalty_for_appointment(appt)
+    # 2) Gửi email mời đánh giá (chỉ gửi nếu đủ điều kiện)
+    mail_sent = send_review_invitation(request, appt)
 
-    messages.success(
-        request,
-        f"Đã check-out và hoàn tất lịch hẹn { _make_booking_code(appt.id) }."
-    )
+    if mail_sent:
+        messages.success(
+            request,
+            f"Đã check-out, hoàn tất lịch hẹn {_make_booking_code(appt.id)} và gửi email mời đánh giá cho khách."
+        )
+    else:
+        messages.success(
+            request,
+            f"Đã check-out và hoàn tất lịch hẹn {_make_booking_code(appt.id)}."
+        )
+
+
     return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
+
+
+def send_review_invitation(request, appt: Appointment) -> bool:
+    """
+    Gửi email mời khách hàng đánh giá sau khi lịch hẹn hoàn tất (DONE).
+    Trả về True nếu ĐÃ cố gửi email, False nếu bỏ qua (không đủ điều kiện).
+    Điều kiện:
+      - khách có email
+      - lịch hẹn CHƯA có review nào
+    """
+    customer = appt.customer
+
+    # 1) Không có email → bỏ qua
+    if not getattr(customer, "email", None):
+        print(f"[REVIEW MAIL] Bỏ qua: customer {customer} không có email.")
+        return False
+
+    # 2) Lịch đã có review → không gửi nữa
+    if appt.reviews.exists():
+        print(f"[REVIEW MAIL] Bỏ qua: appointment {appt.id} đã có review.")
+        return False
+
+    # 3) Tạo link tới trang feedback
+    review_url = request.build_absolute_uri(
+        reverse("main:my_appointments", args=[appt.id])
+    )
+
+    subject = "Mời bạn đánh giá trải nghiệm tại GlamUp Nails 💅"
+
+    text_message = (
+        f"Chào {getattr(customer, 'full_name', '') or customer.username},\n\n"
+        "Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ tại GlamUp Nails.\n"
+        "Bạn có thể dành ít thời gian để đánh giá trải nghiệm của mình tại đây:\n"
+        f"{review_url}\n\n"
+        "Ý kiến của bạn giúp GlamUp Nails cải thiện dịch vụ tốt hơn mỗi ngày.\n"
+        "Chúc bạn một ngày thật xinh đẹp!\n"
+    )
+
+    html_message = f"""
+    <p>Chào <strong>{getattr(customer, 'full_name', '') or customer.username}</strong>,</p>
+    <p>Cảm ơn bạn đã tin tưởng và chọn <strong>GlamUp Nails</strong> để chăm sóc và tân trang cho bộ móng tay xinh yêu của mình 💅✨.</p>
+    <p>Nếu có thể, bạn hãy dành ít phút để đánh giá trải nghiệm dịch vụ vừa rồi giúp GlamUp cải thiện tốt hơn mỗi ngày nhé ❤️.</p>
+    <p style="margin:24px 0;">
+      <a href="{review_url}"
+         style="background:#a5aa7f;color:#ffffff;padding:10px 22px;border-radius:999px;
+                text-decoration:none;font-weight:bold;display:inline-block;">
+        Đánh giá ngay
+      </a>
+    </p>
+    <p>Chúc bạn một ngày thật tốt lành và luôn rạng rỡ! 🌸🌼</p>
+    """
+
+    try:
+        send_mail(
+            subject,
+            text_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [customer.email],
+            fail_silently=False,   # 👈 TẠM THỜI cho False để nếu lỗi SMTP sẽ hiện ở console
+            html_message=html_message,
+        )
+        print(f"[REVIEW MAIL] ĐÃ gửi email mời đánh giá tới {customer.email} cho appt {appt.id}.")
+        return True
+    except Exception as e:
+        # Xem lỗi cụ thể ở console
+        print(f"[REVIEW MAIL] LỖI khi gửi mail cho appt {appt.id}: {e}")
+        return False
+
+
+
+
+
+
 @never_cache
 @login_required
 @user_passes_test(is_staff_user)
