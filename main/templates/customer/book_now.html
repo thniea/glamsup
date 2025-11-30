@@ -216,64 +216,101 @@ document.addEventListener('DOMContentLoaded', () => {
   const timeDisplay = document.getElementById('time_display');
   const datePicker  = document.getElementById('date_picker');
   const dateLabel   = document.getElementById('tp-date-label');
+  const branchSelect = document.querySelector('select[name="branch_id"]');
 
-  const ALL_TIMES = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
-                     "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
-                     "16:00","16:30","17:00","17:30","18:00"];
+  if (!timeGrid) return;
 
-  let availableFromServer = [];
-  let bookedFromServer    = [];
-  try { availableFromServer = JSON.parse(timeGrid.getAttribute('data-available') || "[]"); } catch(e){}
-  try { bookedFromServer    = JSON.parse(timeGrid.getAttribute('data-booked')    || "[]"); } catch(e){}
+  const ALL_TIMES = [
+    "08:00","08:30","09:00","09:30",
+    "10:00","10:30","11:00","11:30",
+    "12:00","12:30","13:00","13:30",
+    "14:00","14:30","15:00","15:30",
+    "16:00","16:30","17:00","17:30",
+    "18:00"
+  ];
 
-  function renderGrid(available = null, booked = []) {
+  /**
+   * Vẽ lưới giờ:
+   *  - booked: các giờ đã được đặt (từ API)
+   *  - selectedDateStr: ngày đang chọn (YYYY-MM-DD)
+   *  => Nếu là hôm nay & giờ < hiện tại => xám luôn (không cho bấm)
+   */
+  function renderGrid(booked = [], selectedDateStr = null) {
     timeGrid.innerHTML = "";
-    const allow = new Set(available || ALL_TIMES);
     const bookedSet = new Set(booked);
 
-    (available ? available : ALL_TIMES).forEach(t => {
+    const now = new Date();
+    const selectedDate = selectedDateStr ? new Date(selectedDateStr) : null;
+    const isTodaySelected = selectedDate &&
+                            selectedDate.toDateString() === now.toDateString();
+
+    ALL_TIMES.forEach(t => {
       const div = document.createElement('div');
       div.className = 'time-slot';
       div.textContent = t;
 
-      if (bookedSet.has(t) || !allow.has(t)) {
+      let disabled = bookedSet.has(t);
+
+      // Nếu là hôm nay: tự chặn các giờ đã qua
+      if (isTodaySelected && !disabled) {
+        const slotDate = new Date(selectedDateStr + "T" + t + ":00");
+        if (slotDate <= now) {
+          disabled = true;
+        }
+      }
+
+      if (disabled) {
         div.classList.add('disabled');
       } else {
         div.addEventListener('click', () => {
-          document.querySelectorAll('#time-grid .time-slot').forEach(s => s.classList.remove('active'));
+          document.querySelectorAll('#time-grid .time-slot')
+                  .forEach(s => s.classList.remove('active'));
           div.classList.add('active');
           timeInput.value = t;
           timeDisplay.value = t;
-          bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+
+          const modalEl = document.getElementById('timeModal');
+          const instance = bootstrap.Modal.getInstance(modalEl);
+          if (instance) instance.hide();
         });
       }
+
       timeGrid.appendChild(div);
     });
   }
 
-  document.getElementById('timeModal').addEventListener('show.bs.modal', async () => {
-    const d = datePicker?.value || '';
-    dateLabel.textContent = d ? new Date(d).toLocaleDateString('vi-VN') : '(chưa chọn)';
+  const modalEl = document.getElementById('timeModal');
 
-    // Nếu có API thật, bật fetch và bỏ phần DEMO phía dưới:
-    // try {
-    //   const res = await fetch(`/api/free-slots/?date=${encodeURIComponent(d)}`);
-    //   const data = await res.json(); // {available:[], booked:[]}
-    //   renderGrid(data.available?.length ? data.available : null, data.booked || []);
-    //   return;
-    // } catch(e){ console.warn('Fetch slots failed, using demo data', e); }
+  modalEl.addEventListener('show.bs.modal', async () => {
+    const d = datePicker.value;
+    const branchId = branchSelect.value;
 
-    // DEMO: booked thay đổi theo thứ trong tuần
-    let demoBooked = bookedFromServer;
-    if (d) {
-      const day = new Date(d).getDay(); // 0..6
-      if (day === 1) demoBooked = ["09:00","10:30","14:30","18:00"];
-      if (day === 6) demoBooked = ["11:00","13:30","17:00"];
+    if (!d || !branchId) {
+      alert("Vui lòng chọn chi nhánh và ngày trước.");
+      timeGrid.innerHTML = "";
+      dateLabel.textContent = "";
+      return;
     }
-    renderGrid(availableFromServer.length ? availableFromServer : null, demoBooked);
+
+    dateLabel.textContent = new Date(d).toLocaleDateString('vi-VN');
+
+    try {
+      const url = `/api/free-slots/?date=${encodeURIComponent(d)}&branch_id=${encodeURIComponent(branchId)}`;
+      const res = await fetch(url);
+      const data = await res.json(); // {available: [], booked: [...]}
+      renderGrid(data.booked || [], d);
+    } catch (err) {
+      console.error("Fetch slots error:", err);
+      // fallback: nếu API lỗi thì coi như chưa ai đặt, chỉ chặn giờ đã qua
+      renderGrid([], d);
+    }
   });
 
-  datePicker?.addEventListener('change', () => { timeInput.value=""; timeDisplay.value=""; });
+  datePicker.addEventListener('change', () => {
+    timeInput.value = "";
+    timeDisplay.value = "";
+  });
 });
 </script>
 {% endblock %}
+

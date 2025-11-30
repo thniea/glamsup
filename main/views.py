@@ -394,6 +394,9 @@ def _overlap(a_start, a_dur_min, b_start, b_dur_min):
     b0 = datetime.combine(day, b_start); b1 = b0 + timedelta(minutes=int(b_dur_min or 0))
     return not (a1 <= b0 or b1 <= a0)
 
+
+
+
 @login_required
 @user_passes_test(is_customer)
 def book_now(request):
@@ -456,6 +459,16 @@ def book_now(request):
     branch     = get_object_or_404(Branch, pk=branch_id)
     appt_date  = datetime.strptime(date_str, "%Y-%m-%d").date()
     start_time = _to_time(time_str)
+
+    # ---- KHÔNG CHO ĐẶT GIỜ ĐÃ QUA ----
+    start_dt = timezone.make_aware(
+        datetime.combine(appt_date, start_time),
+        timezone.get_current_timezone()
+    )
+    if start_dt <= timezone.now():
+        messages.error(request, "Không thể đặt lịch ở thời điểm đã qua. Vui lòng chọn giờ khác.")
+        back_qs = f"?service={svc_obj.slug or svc_obj.id}"
+        return redirect(request.path + back_qs)
 
     total_minutes = int(getattr(svc_obj, "duration", 60) or 60)
     total_price   = Decimal(svc_obj.price or 0)
@@ -648,10 +661,29 @@ def api_free_slots(request):
     b = request.GET.get("branch_id")
     if not (d and b):
         return JsonResponse({"available": [], "booked": []})
+
     d = datetime.strptime(d, "%Y-%m-%d").date()
+
+    # Các giờ đã được đặt
     ap_qs = Appointment.objects.filter(appointment_date=d, branch_id=b)
-    booked = [a.appointment_time.strftime("%H:%M") for a in ap_qs]
-    return JsonResponse({"available": [], "booked": booked})
+    booked = {a.appointment_time.strftime("%H:%M") for a in ap_qs}
+
+    # Nếu là hôm nay: tự chặn luôn các giờ đã qua
+    today = timezone.localdate()
+    if d == today:
+        now_t = timezone.localtime().time()
+        ALL_TIMES = [
+            "08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
+            "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
+            "16:00","16:30","17:00","17:30","18:00",
+        ]
+        for s in ALL_TIMES:
+            t = _to_time(s)           # đã có sẵn helper
+            if t <= now_t:
+                booked.add(s)
+
+    return JsonResponse({"available": [], "booked": sorted(booked)})
+
 
 
 
