@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-
 {% block title %}Appointment Confirmation · Glamup Nails{% endblock %}
 
 {% block head_extra %}
@@ -11,15 +10,16 @@
   .badge-pay{font-weight:900}
 </style>
 {% endblock %}
+
+{# Không hiện messages ở trang này #}
 {% block messages %}{% endblock %}
+
 {% block content %}
 <div class="wrap">
-  <div
-
-  </div>
 
   <div class="panel">
     <h5 class="fw-900 mb-3">Appointment Summary</h5>
+
     <div class="row">
       <div class="col-md-6">
         <p class="mb-1"><b>Date:</b> {{ appt.appointment_date|date:"d/m/Y" }}</p>
@@ -30,30 +30,60 @@
       <div class="col-md-6">
         <p class="mb-1"><b>Payment Status:</b> {{ appt.get_status_display }}</p>
         {% if payment %}
-        <p class="mb-1"><b>Payment Method:</b>
-          {% if payment.method == payment.Method.ONLINE %}Momo/Banking{% else %}Pay at Store{% endif %}
-        </p>
-        <p class="mb-1"><b>Payment Status:</b>
-          {% if payment.status == payment.Status.PAID %}Paid{% else %}Unpaid{% endif %}
-        </p>
+          <p class="mb-1"><b>Payment Method:</b>
+            {% if payment.method == payment.Method.ONLINE %}
+              Momo/Banking
+            {% else %}
+              Pay at Store
+            {% endif %}
+          </p>
+          <p class="mb-1"><b>Payment Status:</b>
+            {% if payment.status == payment.Status.PAID %}Paid{% else %}Unpaid{% endif %}
+          </p>
         {% endif %}
       </div>
     </div>
 
     <hr>
+
     <h6 class="fw-900">Services</h6>
     <table class="table table-sm">
-      <thead><tr><th>Services</th><th class="text-end">Amount</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Services</th>
+          <th class="text-end">Amount</th>
+        </tr>
+      </thead>
       <tbody>
         {% for l in lines %}
         <tr>
-          <td>{{ l.service.service_name }}{% if l.quantity > 1 %} × {{ l.quantity }}{% endif %}</td>
-          <td class="text-end">{{ l.unit_price|floatformat:0|intcomma }} VND</td>
+          <td>
+            {{ l.service.service_name }}
+            {% if l.quantity > 1 %} × {{ l.quantity }}{% endif %}
+          </td>
+          <td class="text-end">
+            {{ l.unit_price|floatformat:0|intcomma }} VND
+          </td>
         </tr>
         {% endfor %}
+
+        {# Nếu có sử dụng điểm thì hiện dòng giảm giá #}
+        {% if discount_vnd and discount_vnd > 0 %}
+        <tr>
+          <td class="fw-semibold text-success">
+            Reward Discount ({{ points_used }} points)
+          </td>
+          <td class="text-end text-success">
+            -{{ discount_vnd|intcomma }} VND
+          </td>
+        </tr>
+        {% endif %}
+
         <tr>
           <td class="fw-bold">Total</td>
-          <td class="text-end fw-bold">{{ amount_vnd }}</td>
+          <td class="text-end fw-bold">
+            {{ amount_vnd|intcomma }} VND
+          </td>
         </tr>
       </tbody>
     </table>
