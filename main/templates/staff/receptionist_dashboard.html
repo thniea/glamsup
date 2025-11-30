@@ -29,13 +29,29 @@
 
     {% include "includes/_messages.html" %}
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h5 mb-0">Lịch hẹn hôm nay ({{ today|date:"d/m/Y" }})</h2>
-      <a href="{% url 'main:receptionist_appointments' %}" class="btn btn-sm btn-outline-dark">
-  <i class="bi bi-list-task me-1"></i> Xem tất cả lịch hẹn
-</a>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="h5 mb-0">
+    Appointments on {{ selected_date|date:"d/m/Y" }}
+      </h2>
 
+      <!-- Nhóm control bên phải: Today’s → date → View -->
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Nút về hôm nay (không nằm trong form) -->
+        <a href="?date={{ today|date:'Y-m-d' }}"
+           class="btn btn-sm btn-outline-success">
+          Today’s appointments
+        </a>
+
+        <!-- Form chọn ngày + View -->
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+          <input type="date"
+                 name="date"
+                 class="form-control form-control-sm"
+                 value="{{ selected_date|date:'Y-m-d' }}">
+          <button class="btn btn-sm btn-outline-secondary">View</button>
+        </form>
+      </div>
+    </div>
     <div class="row g-3 mb-4">
       <div class="col-md-4">
         <div class="card p-3 bg-light">

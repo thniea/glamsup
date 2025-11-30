@@ -1107,13 +1107,17 @@ def _map_appt_for_rx(appt):
 @user_passes_test(is_receptionist)
 def receptionist_dashboard(request):
     """
-    Lễ tân: hiển thị lịch hẹn từ hôm nay đến 7 ngày tới, trừ DONE/CANCELED.
+     Lễ tân: hiển thị lịch hẹn theo ngày (mặc định: hôm nay).
+    Có thể chọn ngày khác bằng ?date=YYYY-MM-DD
     """
-    today = timezone.localdate()
-    end = today + timedelta(days=7)
+    try:
+        date_str = (request.GET.get("date") or "").strip()
+        selected_date = _date.fromisoformat(date_str) if date_str else timezone.localdate()
+    except ValueError:
+        selected_date = timezone.localdate()
 
     qs = (Appointment.objects
-          .filter(appointment_date__range=(today, end))
+          .filter(appointment_date=selected_date)
           .exclude(status__in=[Appointment.Status.DONE, Appointment.Status.CANCELED])
           .select_related("branch", "customer")
           # ✅ đúng related_name
@@ -1124,7 +1128,8 @@ def receptionist_dashboard(request):
 
     return render(request, "staff/receptionist_dashboard.html", {
         "appointments": appointments_ctx,
-        "today": today,
+        "today": timezone.localdate(),   # để làm nút “Hôm nay”
+        "selected_date": selected_date,  # ngày đang xem
         "is_receptionist": True,
         "is_technician": False,
     })
@@ -1535,14 +1540,22 @@ def staff_appointments(request):
     today = timezone.localdate()
     now_t = timezone.localtime().time()
 
-    # Các lịch của chính nhân viên đang đăng nhập
-    appt_qs = (
-        Appointment.objects
-        .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
-        .select_related("branch", "customer")
-        .prefetch_related("service_lines__service", "payments")
+    if is_receptionist(staff):
+        # LỄ TÂN: xem tất cả lịch
+        appt_qs = (
+            Appointment.objects
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service")
+        )
+    else:
+        # Các lịch của chính nhân viên đang đăng nhập
+        appt_qs = (
+            Appointment.objects
+            .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
+            .select_related("branch", "customer")
+            .prefetch_related("service_lines__service", "payments")
 
-    )
+        )
     # áp dụng filter
     if status_filter == "completed":
         appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
