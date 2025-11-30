@@ -68,8 +68,15 @@
             {% for u in staff %}
             <tr>
               <td>
-                <div class="rounded-circle bg-light border" style="width:36px;height:36px;"></div>
-              </td>
+  {% if u.avatar %}
+    <img src="{{ u.avatar.url }}"
+         alt="{{ u.full_name|default:u.get_full_name|default:u.username }}"
+         class="rounded-circle border"
+         style="width:36px;height:36px;object-fit:cover;">
+  {% else %}
+    <div class="rounded-circle bg-light border" style="width:36px;height:36px;"></div>
+  {% endif %}
+</td>
               <td class="fw-semibold">
                 {{ u.full_name|default:u.get_full_name|default:u.username }}
                 {% if not u.is_active %}

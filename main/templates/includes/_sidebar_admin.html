@@ -49,69 +49,69 @@
 <div class="bo-sidebar">
   <!-- Header -->
   <div class="bo-profile d-flex align-items-center gap-3 mb-3">
-    <img src="{{ staff_avatar_url|default:'/static/images/avatar.png' }}"
+    <img src="{{ staff_avatar_url|default:'/static/img/ảnh_người_1.jpg' }}"
          class="bo-avatar" alt="avatar">
     <div>
-      <div class="bo-role small">Staff</div>
+      <div class="bo-role small">Admin</div>
       <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
     </div>
   </div>
 
   <!-- Menu -->
   <nav class="bo-menu d-grid gap-2">
+    <!-- 1. Dashboard -->
     <a class="bo-item {% if active == 'dashboard' %}active{% endif %}"
        href="{% url 'main:admin_dashboard' %}">
-      <span class="bo-ic"><i class="bi bi-house-door"></i></span>
+      <span class="bo-ic"><i class="bi bi-bar-chart"></i></span>
       Dashboard
     </a>
 
-    <a class="bo-item {% if active == 'service' %}active{% endif %}"
-       href="{% url 'main:admin_service' %}">
-      <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
-      Service
+    <!-- 2. Employee -->
+    <a class="bo-item {% if active == 'employee' %}active{% endif %}"
+       href="{% url 'main:admin_employee' %}">
+      <span class="bo-ic"><i class="bi bi-people"></i></span>
+      Employee
     </a>
 
+    <!-- 3. Schedule Employee -->
     <a class="bo-item {% if active == 'schedule' %}active{% endif %}"
        href="{% url 'main:admin_schedule' %}">
       <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
       Schedule Employee
     </a>
 
-      <a class="bo-item {% if active == 'feedback' %}active{% endif %}"
-       href="{% url 'main:admin_feedback' %}">
-      <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
-      Feedback
+    <!-- 4. Service -->
+    <a class="bo-item {% if active == 'service' %}active{% endif %}"
+       href="{% url 'main:admin_service' %}">
+      <span class="bo-ic"><i class="bi bi-heart"></i></span>
+      Service
     </a>
 
-      <a class="bo-item {% if active == 'employee' %}active{% endif %}"
-       href="{% url 'main:admin_employee' %}">
-      <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
-      Employee
-    </a>
-      <a class="bo-item {% if active == 'branch' %}active{% endif %}"
+    <!-- 5. Branch -->
+    <a class="bo-item {% if active == 'branch' %}active{% endif %}"
        href="{% url 'main:branch_list' %}">
       <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
       Branch
     </a>
-      <a class="bo-item" href="#" id="logout-link">
-          <span class="bo-ic"><i class="bi bi-box-arrow-right"></i></span>
-          Log out
-      </a>
-      <form id="logout-form" action="{% url 'main:logout' %}" method="post" style="display:none;">
-          {% csrf_token %}
-      </form>
+
+    <!-- 6. Feedback -->
+    <a class="bo-item {% if active == 'feedback' %}active{% endif %}"
+       href="{% url 'main:admin_feedback' %}">
+      <span class="bo-ic"><i class="bi-chat-dots"></i></span>
+      Feedback
+    </a>
+  </nav>
+
+</div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function(){
-      const link = document.getElementById('logout-link');
-      if(link){
-        link.addEventListener('click', function(e){
-          e.preventDefault();
-          document.getElementById('logout-form').submit();
-        });
-      }
-    });
-    </script>
-
-      </nav>
-    </div>
+  document.addEventListener('DOMContentLoaded', function(){
+    const link = document.getElementById('logout-link');
+    if(link){
+      link.addEventListener('click', function(e){
+        e.preventDefault();
+        document.getElementById('logout-form').submit();
+      });
+    }
+  });
+</script>

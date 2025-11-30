@@ -82,15 +82,20 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="row g-4">
+
+  {% include "includes/_messages.html" %}
+
+  <!-- Sidebar -->
+    <div class="row g-4">
   <div class="col-lg-3 col-md-4">
     {% include 'includes/_sidebar_customer.html' with active='loyalty' %}
   </div>
+  <!-- Main -->
+  <div class="col-md-8 col-lg-9 d-grid gap-4">
 
-  <!-- Content -->
-  <div class="col-md-9">
-    <div class="loyalty-wrap">
-      <h1 class="page-title text-center">REWARD POINTS HISTORY</h1>
+        <h1 class="page-title text-center">REWARD POINTS HISTORY</h1>
 
       <!-- Tổng quan điểm -->
       <div class="loyalty-summary mb-4 d-flex flex-wrap justify-content-between gap-4">

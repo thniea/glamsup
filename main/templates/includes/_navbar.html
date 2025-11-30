@@ -24,12 +24,25 @@
 
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav ms-auto gap-lg-3 align-items-center">
+
+          <li class="nav-item">
+  <a class="nav-link nav-link-ink fw-semibold {% if request.resolver_match.url_name == 'book' %}active-nav{% endif %}"
+     href="{% url 'main:book' %}">BOOK NOW</a>
+</li>
         <li class="nav-item">
-          <a class="btn btn-booknow px-4 py-2 rounded-pill fw-semibold" href="{% url 'main:book' %}">Book Now</a>
-        </li>
-        <li class="nav-item"><a class="nav-link nav-link-ink fw-semibold" href="{% url 'main:home' %}">Home</a></li>
-        <li class="nav-item"><a class="nav-link nav-link-ink fw-semibold" href="{% url 'main:services' %}">Services</a></li>
-         <li class="nav-item"><a class="nav-link nav-link-ink fw-semibold" href="{% url 'main:contact' %}">Contact</a></li>
+  <a class="nav-link nav-link-ink fw-semibold {% if request.resolver_match.url_name == 'home' %}active-nav{% endif %}"
+     href="{% url 'main:home' %}">HOME</a>
+</li>
+
+<li class="nav-item">
+  <a class="nav-link nav-link-ink fw-semibold {% if request.resolver_match.url_name == 'services' %}active-nav{% endif %}"
+     href="{% url 'main:services' %}">SERVICES</a>
+</li>
+
+<li class="nav-item">
+  <a class="nav-link nav-link-ink fw-semibold {% if request.resolver_match.url_name == 'contact' %}active-nav{% endif %}"
+     href="{% url 'main:contact' %}">CONTACT</a>
+</li>
         <li class="nav-item ms-lg-2 dropdown">
           <a class="nav-link nav-link-ink p-0" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Account">
             <i class="bi bi-person-circle fs-4"></i>
@@ -38,7 +51,7 @@
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
 
 {% if user.is_authenticated %}
-    <li><h6 class="dropdown-header">Xin chào, {{ user.username|default:'Bạn' }}!</h6></li>
+    <li><h6 class="dropdown-header">Hello, {{ user.username|default:'Bạn' }}!</h6></li>
     <li><hr class="dropdown-divider"></li>
 
     {% if user.is_superuser %}
