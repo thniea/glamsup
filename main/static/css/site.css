@@ -75,9 +75,9 @@ footer{
   background: var(--brand);
     color:#fff;
     font-weight:800;
-    border:none;
+    border: 2px solid var(--brand);
     border-radius: 999px;
-    padding:8px 20px;
+    padding:7px 20px;
     box-shadow: 0 3px 10px rgba(114,145,70,.25);
     transition: .25s ease;
 }
@@ -94,7 +94,7 @@ footer{
   color: var(--brand);
   border: 2px solid var(--brand);
   border-radius: 999px;
-  padding: .5rem 1rem;
+  padding:7px 20px;
   font-weight: 800;
   transition: all .2s ease;
 }
@@ -279,3 +279,38 @@ label{
 .active-nav::after {
   width: 0 !important;
 }
+
+/* ===== Pagination GlamUp style ===== */
+  .pagination{
+    margin-bottom: 0;
+  }
+
+  .pagination .page-link{
+    border-radius: 999px;
+    border: 2px solid var(--brand);
+    background: #fdfcf6;
+    color: var(--brand);
+    font-weight: 700;
+    padding: .25rem .75rem;
+    min-width: 38px;
+    text-align: center;
+    transition: all .18s ease;
+  }
+
+  .pagination .page-link:hover{
+    background: var(--brand);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .pagination .page-item.active .page-link{
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 2px #e4e8d2;
+  }
+
+  .pagination .page-link:focus{
+    box-shadow: 0 0 0 2px #e4e8d2;
+  }
+

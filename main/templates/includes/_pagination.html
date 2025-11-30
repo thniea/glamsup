@@ -1,35 +1,50 @@
-{# _pagination.html #}
+{# templates/includes/_pagination.html #}
 {# Nhận vào biến page_obj (đối tượng Page) và tùy chọn q để giữ query search #}
-{% if page_obj %}
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
   {% with q=request.GET.q %}
   <nav class="mt-3" aria-label="Pagination">
-    <ul class="pagination mb-0">
+    <ul class="pagination justify-content-center mb-0">
 
       {# Previous #}
-      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-        <a class="page-link"
-           href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={% if page_obj.has_previous %}{{ page_obj.previous_page_number }}{% else %}1{% endif %}"
-           aria-label="Previous">
-          &laquo;
-        </a>
-      </li>
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             aria-label="Previous">
+            &laquo;
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&laquo;</span>
+        </li>
+      {% endif %}
 
       {# Page numbers #}
       {% for p in page_obj.paginator.page_range %}
         <li class="page-item {% if p == page_obj.number %}active{% endif %}">
           <a class="page-link"
-             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ p }}">{{ p }}</a>
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ p }}">
+            {{ p }}
+          </a>
         </li>
       {% endfor %}
 
       {# Next #}
-      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-        <a class="page-link"
-           href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={% if page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}{{ page_obj.paginator.num_pages }}{% endif %}"
-           aria-label="Next">
-          &raquo;
-        </a>
-      </li>
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if q %}q={{ q|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+             aria-label="Next">
+            &raquo;
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link" aria-hidden="true">&raquo;</span>
+        </li>
+      {% endif %}
 
     </ul>
   </nav>

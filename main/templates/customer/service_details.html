@@ -28,8 +28,7 @@
   .desc{margin-top:10px}
 
   .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-  .btn{border:2px solid var(--brand-strong);border-radius:12px;background:#fff;padding:10px 16px;font-weight:900;color:var(--brand-strong);text-decoration:none}
-  .btn:hover{background:var(--brand-strong);color:#fff}
+
 
   .section{margin-top:32px}
   .section h3{font-weight:900;margin:0 0 12px;font-size:22px}
@@ -101,7 +100,7 @@
       </p>
 
       <div class="cta">
-        <a class="btn" href="{% url 'main:services' %}">← Back to Services</a>
+        <a class="btn btn-outline-brand" href="{% url 'main:services' %}">← Back to Services</a>
         <a class="btn btn-brand" href="{% url 'main:book' %}?service={{ service.slug|default:service.id }}">
           Book now
         </a>

@@ -5,12 +5,7 @@
 
 {% block head_extra %}
 <style>
-  :root{
-    --brand:#2F5D38;         /* olive nhạt */
-    --brand-strong:#8b9361;  /* olive đậm cho viền & nút */
-    --ink:#2b3220;
-    --edge:#d7ddc1;
-  }
+
   .wrap{max-width:1200px;margin:24px auto 72px;padding:0 16px;color:var(--ink)}
 
   /* Banner */
@@ -28,16 +23,16 @@
   .side{border:1px solid var(--edge);border-radius:14px;padding:16px;background:#fff}
   .side h3{margin:4px 0 12px;font-weight:900}
   .cat-btn{
-    width:100%;display:block;text-align:left;border:2px solid var(--brand-strong);background:#fff;color:var(--brand-strong);
+    width:100%;display:block;text-align:left;border:2px solid #8b9361;background:#fff;color:#8b9361;
     border-radius:12px;padding:10px 14px;font-weight:900;margin-bottom:10px;cursor:pointer
   }
-  .cat-btn.active,.cat-btn:hover{background:var(--brand-strong);color:#fff}
+  .cat-btn.active,.cat-btn:hover{background:#8b9361;color:#fff}
 
   /* Controls */
   .controls{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:14px}
   @media (max-width:560px){ .controls{grid-template-columns:1fr} }
   .search, select{
-    border:2px solid var(--brand-strong);border-radius:12px;padding:10px 14px;background:#fff
+    border:2px solid #8b9361;border-radius:12px;padding:10px 14px;background:#fff
   }
 
   /* Grid + Card */
@@ -47,9 +42,9 @@
 .card:hover{
     transform: translateY(-4px);
     box-shadow: 0 10px 22px rgba(0,0,0,0.10);
-    border-color: var(--brand);
+    border-color: #2F5D38;
 }
-  .card{border:3px solid var(--brand-strong);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.04); transition: all .25s ease;}
+  .card{border:3px solid #8b9361;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 0 rgba(0,0,0,.04); transition: all .25s ease;}
   .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}         /* Ảnh vuông */
   .body{padding:8px 12px}                                                     /* mô tả gọn */
   .c-row{display:flex;justify-content:space-between;gap:10px;align-items:center} /* tránh đụng .row của footer */
@@ -58,7 +53,6 @@
   .c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
   .stars{color:#f5b800;font-size:16px;letter-spacing:2px;line-height:1}
 
-  /* ❌ đã bỏ .btn-outline cũ – dùng hệ btn chung trong base.css */
 
   .hide{display:none !important}
   .empty{padding:18px;border:2px dashed var(--brand-strong);border-radius:12px;background:#fff}
@@ -92,7 +86,7 @@
     <!-- Main -->
     <section>
       <div class="controls">
-        <input id="q" class="search" type="search" placeholder="Search services…" aria-label="Search services">
+        <input id="q" class="search" type="search" placeholder="Search services…" data-bs-toggle="dropdown" aria-label="Search services">
         <select id="sort" aria-label="Sort by">
           <option value="">Sort by: Default</option>
           <option value="name_asc">Name (A → Z)</option>
