@@ -596,12 +596,40 @@ def payment(request, code: str):
     subtotal = sum((l.unit_price or 0) * (l.quantity or 1) for l in lines)
     u = request.user
 
+    # ====== CHỈNH 1: TÍNH GIẢM GIÁ TỪ ĐIỂM LOYALTY ======
+    total_vnd = int(appt.total_price or 0)
+
+    lp, _ = LoyaltyPoints.objects.get_or_create(customer=u)
+    available_points = lp.current_points
+
+    discount_vnd = 0
+    points_used = 0
+
+    # Chỉ khi >= 100 điểm mới được đổi
+    if available_points >= 100:
+        # Dùng số điểm là bội số của 10 (để quy đổi 10 điểm = 1.000đ)
+        usable_points = (available_points // 10) * 10
+        if usable_points >= 100:
+            points_used = usable_points
+            discount_vnd = (points_used // 10) * 1000
+
+    # Tổng phải trả sau giảm
+    final_amount = max(0, total_vnd - discount_vnd)
+    # ====== HẾT CHỈNH 1 ======
+
     ctx = {
         "appointment": appt,
         "payment": pay,
         "lines": lines,
-        "amount_vnd": int(appt.total_price or 0),
         "subtotal_vnd": int(subtotal or 0),
+
+        # ====== CHỈNH 2: DÙNG final_amount ======
+        "amount_vnd": final_amount,
+        "discount_vnd": discount_vnd,
+        "points_used": points_used,
+        "available_points": available_points,
+        # ====== HẾT CHỈNH 2 ======
+
         "code": code,
         "bank": BANK,  # dict cố định
         "prefill_email": (u.email or getattr(u, "phone_number", "") or ""),
@@ -609,6 +637,7 @@ def payment(request, code: str):
     }
     # KHÔNG render messages ở trang payment
     return render(request, "customer/payment.html", ctx)
+
 
 
 from django.views.decorators.http import require_POST
@@ -621,17 +650,58 @@ def payment_complete(request, code: str):
     pay  = get_object_or_404(Payment, appointment=appt)
 
     if pay.method == Payment.Method.ONLINE:
+        # Tránh xử lý lại nếu đã thanh toán rồi
+        if pay.status == Payment.Status.PAID:
+            messages.info(request, "Đơn hàng này đã được thanh toán trước đó.")
+            return redirect("main:order_result", code=code)
+
         # Giả lập thanh toán thành công
         pay.status = Payment.Status.PAID
         pay.save(update_fields=["status"])
         appt.status = Appointment.Status.CONFIRMED
         appt.save(update_fields=["status"])
+
+        # ====== CHỈNH: TRỪ ĐIỂM LOYALTY NẾU CÓ ======
+        lp, _ = LoyaltyPoints.objects.get_or_create(customer=request.user)
+        available_points = lp.current_points
+
+        total_vnd = int(appt.total_price or 0)
+        points_used = 0
+        discount_vnd = 0
+
+        if available_points >= 100:
+            usable_points = (available_points // 10) * 10
+            if usable_points >= 100:
+                points_used = usable_points
+                discount_vnd = (points_used // 10) * 1000
+
+        if points_used >= 100:
+            lp.current_points -= points_used
+            lp.points_used += points_used
+            lp.save(update_fields=["current_points", "points_used", "last_updated"])
+
+            LoyaltyTransaction.objects.create(
+                customer=request.user,
+                appointment=appt,
+                type=LoyaltyTransaction.Type.USE,
+                points=-points_used,
+                balance_after=lp.current_points,
+                description=(
+                    f"Đổi {points_used} điểm để giảm {discount_vnd:,} VND "
+                    f"cho lịch BK{appt.id:06d}"
+                ),
+            )
+        # ====== HẾT PHẦN CHỈNH ======
+
         messages.success(request, "Thanh toán thành công. Lịch hẹn đã được xác nhận.")
     else:
-        # Trả tại quầy: CHƯA thanh toán, vẫn PENDING
-        messages.success(request, "Đặt lịch thành công. Vui lòng thanh toán tại quầy khi đến cửa hàng.")
+        messages.success(
+            request,
+            "Đặt lịch thành công. Vui lòng thanh toán tại quầy khi đến cửa hàng."
+        )
 
     return redirect("main:order_result", code=code)
+
 
 
 @login_required
@@ -639,21 +709,50 @@ def order_result(request, code: str):
     appt_pk = _code_to_pk(code)
     appt = get_object_or_404(Appointment, pk=appt_pk, customer=request.user)
     pay  = get_object_or_404(Payment, appointment=appt)
-    lines = AppointmentService.objects.filter(appointment=appt).select_related("service")
+    lines = (
+        AppointmentService.objects
+        .filter(appointment=appt)
+        .select_related("service")
+    )
     subtotal = sum((l.unit_price or 0) * (l.quantity or 1) for l in lines)
 
+    # ====== MỚI: tính lại tổng + giảm giá từ điểm ======
+    total_vnd = int(appt.total_price or 0)
+
+    # tìm giao dịch USE điểm (nếu có) cho lịch này
+    tx = (
+        LoyaltyTransaction.objects
+        .filter(
+            customer=request.user,
+            appointment=appt,
+            type=LoyaltyTransaction.Type.USE,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+    points_used = abs(tx.points) if tx else 0
+    discount_vnd = (points_used // 10) * 1000 if points_used else 0
+    final_amount_vnd = max(0, total_vnd - discount_vnd)
+    # ====== HẾT PHẦN MỚI ======
+
     ctx = {
-        "appt": appt,                     # <<< để booking_success.html dùng {{ appt.* }}
-        "appointment": appt,              # (giữ cả 2 nếu lỡ template khác dùng)
+        "appt": appt,                     # booking_sucess.html đang dùng {{ appt.* }}
+        "appointment": appt,              # giữ thêm cho template khác nếu có
         "payment": pay,
         "lines": lines,
         "subtotal_vnd": int(subtotal or 0),
-        "amount_vnd": int(appt.total_price or 0),
+
+        # giá gốc & sau giảm
+        "original_amount_vnd": total_vnd,  # tổng trước khi chiết khấu (nếu cần)
+        "discount_vnd": discount_vnd,      # số tiền giảm từ điểm
+        "points_used": points_used,        # số điểm đã dùng
+        "amount_vnd": final_amount_vnd,    # 👉 tổng sau khi chiết khấu (dùng thay cho cũ)
+
         "code": code,
-        "paid": (pay.status == Payment.Status.PAID),  # <<< banner trên cùng
+        "paid": (pay.status == Payment.Status.PAID),
     }
     return render(request, "customer/booking_sucess.html", ctx)
-
 
 
 from django.http import JsonResponse
@@ -1071,7 +1170,7 @@ def customer_account(request):
 
     # --------- Loyalty & Upcoming ----------
     lp, _ = LoyaltyPoints.objects.get_or_create(customer=u)
-    tier, discount = _membership_from_points(lp.current_points)
+    tier, discount = _membership_from_points(lp.points_earned)
 
     today = timezone.localdate()
     now_t = timezone.localtime().time()
@@ -1298,7 +1397,7 @@ def send_review_invitation(request, appt: Appointment) -> bool:
 
     # 3) Tạo link tới trang feedback
     review_url = request.build_absolute_uri(
-        reverse("main:my_appointments", args=[appt.id])
+        reverse("main:my_appointments")
     )
 
     subject = "Mời bạn đánh giá trải nghiệm tại GlamUp Nails 💅"

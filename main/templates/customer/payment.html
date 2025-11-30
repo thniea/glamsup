@@ -67,12 +67,34 @@
                   {% endif %}
                 </td>
               </tr>
+
+              {# ====== CHỈNH: HIỂN THỊ GIẢM GIÁ TỪ ĐIỂM ====== #}
+              {% if discount_vnd and discount_vnd > 0 %}
+              <tr>
+                <td class="fw-semibold text-success">
+                  Reward Discount ({{ points_used }} points)
+                </td>
+                <td class="text-end text-success">
+                  -{{ discount_vnd|intcomma }} VND
+                </td>
+              </tr>
+              {% endif %}
+              {# ====== HẾT PHẦN CHỈNH ====== #}
+
               <tr>
                 <td class="fw-bold">Grand Total:</td>
                 <td class="text-end fw-bold">{{ amount_vnd|intcomma }} VND</td>
               </tr>
             </tbody>
           </table>
+
+          {# Optional: thông tin điểm hiện có #}
+          <div class="mt-2 small text-muted">
+            Reward points balance: <strong>{{ available_points }}</strong> points
+            {% if available_points < 100 %}
+              · (cần tối thiểu 100 điểm để được giảm giá)
+            {% endif %}
+          </div>
         </div>
 
         <div class="mt-3 d-grid">
@@ -131,5 +153,3 @@
   </div>
 </div>
 {% endblock %}
-
-
