@@ -32,7 +32,7 @@
     color:var(--ink); text-decoration:none; font-weight:800;
     transition:background .15s, box-shadow .15s;
   }
-  .bo-item:hover{ background:var(--chip);text-decoration: none }
+  .bo-item:hover{ background:var(--chip);text-decoration:none }
   .bo-item.active{
     background:var(--chip);
     box-shadow: inset 0 0 0 2px #d6d1b8;
@@ -58,8 +58,8 @@
     <div>
       <!-- HIỂN THỊ VAI TRÒ DỰA TRÊN GROUP -->
       <div class="bo-role small">
-       {% if is_receptionist %}Lễ tân
-        {% elif is_technician %}Kỹ thuật viên
+        {% if is_receptionist %}Receptionist
+        {% elif is_technician %}Technician
         {% else %}Staff
         {% endif %}
       </div>
@@ -71,57 +71,53 @@
 
   <!-- Menu -->
   <nav class="bo-menu d-grid gap-2">
-       {% if is_receptionist %}
+    {% if is_receptionist %}
       <!-- Lễ tân: Có Dashboard riêng (Check-in/out) -->
       <a class="bo-item {% if active == 'dashboard' %}active{% endif %}"
          href="{% url 'main:receptionist_dashboard' %}">
         <span class="bo-ic"><i class="bi bi-speedometer2"></i></span>
-        Dashboard Lễ tân
+        Appointment
       </a>
     {% endif %}
-    <a class="bo-item {% if active == 'account' or active == 'overview' %}active{% endif %}"
-       href="{% url 'main:staff_account' %}">
-      <span class="bo-ic"><i class="bi bi-house-door"></i></span>
-      Overall
-    </a>
 
+
+{% if not is_receptionist %}
     <a class="bo-item {% if active == 'appointments' %}active{% endif %}"
        href="{% url 'main:staff_appointments' %}">
       <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
       Appointment
     </a>
-
+{% endif %}
     <a class="bo-item {% if active == 'schedule' %}active{% endif %}"
        href="{% url 'main:staff_schedule' %}">
       <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
       Staff Schedule
     </a>
-          <a class="bo-item {% if active == 'inbox' %}active{% endif %}"
+
+    <a class="bo-item {% if active == 'inbox' %}active{% endif %}"
        href="{% url 'main:staff_inbox' %}">
-      <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
+      <span class="bo-ic"><i class="bi bi-envelope-paper"></i></span>
       Staff Inbox
     </a>
 
-        </a>
-      <a class="bo-item" href="#" id="logout-link">
-          <span class="bo-ic"><i class="bi bi-box-arrow-right"></i></span>
-          Log out
-      </a>
-      <form id="logout-form" action="{% url 'main:logout' %}" method="post" style="display:none;">
-          {% csrf_token %}
-      </form>
+    <!-- Profile (trước đây là Overall) -->
+    <a class="bo-item {% if active == 'account' or active == 'overview' %}active{% endif %}"
+       href="{% url 'main:staff_account' %}">
+      <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
+      Profile
+    </a>
+  </nav>
+
+</div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function(){
-      const link = document.getElementById('logout-link');
-      if(link){
-        link.addEventListener('click', function(e){
-          e.preventDefault();
-          document.getElementById('logout-form').submit();
-        });
-      }
-    });
-    </script>
-
-      </nav>
-    </div>
+  document.addEventListener('DOMContentLoaded', function () {
+    const link = document.getElementById('logout-link');
+    if (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('logout-form').submit();
+      });
+    }
+  });
+</script>

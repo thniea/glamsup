@@ -76,7 +76,11 @@
         <div class="fw-black fs-5" style="letter-spacing:.3px;">
           {{ staff.display_name|default:request.user.full_name|default:request.user.username }}
         </div>
-        <div class="text-muted small">Staff</div>
+           {% if is_receptionist %}
+        <div class="text-muted small">Receptionist</div>
+          {%else%}
+          <div class="text-muted small">Technician</div>
+          {%endif%}
       </div>
     </div>
 
