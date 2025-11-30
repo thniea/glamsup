@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Thanh toán · Glamup Nails{% endblock %}
+{% block title %}Payment · Glamup Nails{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -79,9 +79,9 @@
           <form method="post" action="{% url 'main:payment_complete' code=code %}">
             {% csrf_token %}
             {% if payment.method == payment.Method.ONLINE %}
-              <button class="btn btn-brand btn-lg btn-wide">Hoàn tất thanh toán</button>
+              <button class="btn btn-brand btn-lg btn-wide">Complete Payment</button>
             {% else %}
-              <button class="btn btn-outline-brand btn-lg btn-wide">Xác nhận đặt lịch</button>
+              <button class="btn btn-outline-brand btn-lg btn-wide">Confirm Booking</button>
             {% endif %}
           </form>
         </div>

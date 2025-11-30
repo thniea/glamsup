@@ -394,6 +394,9 @@ def _overlap(a_start, a_dur_min, b_start, b_dur_min):
     b0 = datetime.combine(day, b_start); b1 = b0 + timedelta(minutes=int(b_dur_min or 0))
     return not (a1 <= b0 or b1 <= a0)
 
+
+
+
 @login_required
 @user_passes_test(is_customer)
 def book_now(request):
@@ -456,6 +459,16 @@ def book_now(request):
     branch     = get_object_or_404(Branch, pk=branch_id)
     appt_date  = datetime.strptime(date_str, "%Y-%m-%d").date()
     start_time = _to_time(time_str)
+
+    # ---- KHÔNG CHO ĐẶT GIỜ ĐÃ QUA ----
+    start_dt = timezone.make_aware(
+        datetime.combine(appt_date, start_time),
+        timezone.get_current_timezone()
+    )
+    if start_dt <= timezone.now():
+        messages.error(request, "Không thể đặt lịch ở thời điểm đã qua. Vui lòng chọn giờ khác.")
+        back_qs = f"?service={svc_obj.slug or svc_obj.id}"
+        return redirect(request.path + back_qs)
 
     total_minutes = int(getattr(svc_obj, "duration", 60) or 60)
     total_price   = Decimal(svc_obj.price or 0)
@@ -648,10 +661,29 @@ def api_free_slots(request):
     b = request.GET.get("branch_id")
     if not (d and b):
         return JsonResponse({"available": [], "booked": []})
+
     d = datetime.strptime(d, "%Y-%m-%d").date()
+
+    # Các giờ đã được đặt
     ap_qs = Appointment.objects.filter(appointment_date=d, branch_id=b)
-    booked = [a.appointment_time.strftime("%H:%M") for a in ap_qs]
-    return JsonResponse({"available": [], "booked": booked})
+    booked = {a.appointment_time.strftime("%H:%M") for a in ap_qs}
+
+    # Nếu là hôm nay: tự chặn luôn các giờ đã qua
+    today = timezone.localdate()
+    if d == today:
+        now_t = timezone.localtime().time()
+        ALL_TIMES = [
+            "08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
+            "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
+            "16:00","16:30","17:00","17:30","18:00",
+        ]
+        for s in ALL_TIMES:
+            t = _to_time(s)           # đã có sẵn helper
+            if t <= now_t:
+                booked.add(s)
+
+    return JsonResponse({"available": [], "booked": sorted(booked)})
+
 
 
 
@@ -1182,12 +1214,27 @@ def check_in(request, pk: int):
 def check_out(request, pk: int):
     """
     Lễ tân kết thúc lịch hẹn → DONE.
-    (Nếu muốn thu tiền tại quầy khi UNPAID, bạn có thể cập nhật Payment ở đây.)
+    Đây là bước cuối cùng:
+      - Hoàn tất lịch hẹn
+      - Cộng điểm loyalty (nếu đủ điều kiện)
     """
     appt = get_object_or_404(Appointment, pk=pk)
+
+    # Tránh check-out lại những lịch đã xong/hủy
+    if appt.status in [Appointment.Status.DONE, Appointment.Status.CANCELED]:
+        messages.info(request, "Lịch hẹn này đã được xử lý xong.")
+        return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
+
     appt.status = Appointment.Status.DONE
     appt.save(update_fields=["status"])
-    messages.success(request, f"Đã check-out và hoàn tất lịch hẹn { _make_booking_code(appt.id) }.")
+
+    #  Cộng điểm loyalty tại bước check-out
+    _award_loyalty_for_appointment(appt)
+
+    messages.success(
+        request,
+        f"Đã check-out và hoàn tất lịch hẹn { _make_booking_code(appt.id) }."
+    )
     return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
 @never_cache
 @login_required
@@ -1540,34 +1587,36 @@ def staff_appointments(request):
     today = timezone.localdate()
     now_t = timezone.localtime().time()
 
-    if is_receptionist(staff):
-        # LỄ TÂN: xem tất cả lịch
-        appt_qs = (
-            Appointment.objects
-            .select_related("branch", "customer")
-            .prefetch_related("service_lines__service")
-        )
-    else:
-        # Các lịch của chính nhân viên đang đăng nhập
-        appt_qs = (
-            Appointment.objects
-            .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
-            .select_related("branch", "customer")
-            .prefetch_related("service_lines__service", "payments")
 
-        )
+
+    # Các lịch của chính nhân viên đang đăng nhập
+    appt_qs = (
+        Appointment.objects
+        .filter(staff_lines__staff=staff)                     # <-- dùng staff_lines
+        .select_related("branch", "customer")
+        .prefetch_related("service_lines__service", "payments")
+
+    )
+    # áp dụng filter
     # áp dụng filter
     if status_filter == "completed":
-        appt_qs = appt_qs.filter(status=Appointment.Status.DONE)
+        # Với KTV: coi cả ONGOING (đã làm xong, chờ lễ tân) và DONE là "Completed"
+        appt_qs = appt_qs.filter(
+            status__in=[Appointment.Status.ONGOING, Appointment.Status.DONE]
+        )
+
     elif status_filter == "all":
         # không filter thêm
         pass
+
     else:
         # UPCOMING (mặc định):
-        # - chưa DONE
+        # - chưa làm xong (loại ONGOING & DONE)
         # - ngày hẹn lớn hơn hôm nay
         #   hoặc cùng ngày hôm nay nhưng giờ >= hiện tại
-        appt_qs = appt_qs.exclude(status=Appointment.Status.DONE).filter(
+        appt_qs = appt_qs.exclude(
+            status__in=[Appointment.Status.ONGOING, Appointment.Status.DONE]
+        ).filter(
             Q(appointment_date__gt=today) |
             Q(appointment_date=today, appointment_time__gte=now_t)
         )
@@ -1620,10 +1669,14 @@ def staff_appointments(request):
         appt = get_object_or_404(Appointment, pk=appt_id, staff_lines__staff=staff)  # <-- staff_lines
 
         if action == "mark_completed":
-            appt.status = Appointment.Status.DONE
+            # ❗ KTV chỉ đánh dấu đã xong dịch vụ,
+            # vẫn để trạng thái ở mức chờ lễ tân check-out
+            appt.status = Appointment.Status.ONGOING
             appt.save(update_fields=["status"])
-            _award_loyalty_for_appointment(appt)
-            messages.success(request, "Đã đánh dấu hoàn thành.")
+            messages.success(
+                request,
+                "completed"
+            )
         elif action == "mark_uncompleted":
             appt.status = Appointment.Status.ONGOING
             appt.save(update_fields=["status"])
