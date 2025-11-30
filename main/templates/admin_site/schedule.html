@@ -5,12 +5,92 @@
 
 {% block head_extra %}
 <style>
-  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220; }
+  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220; --edge:#cfd3a9; }
   body{ background:var(--bg); }
-  .schedule-table thead th{ background:var(--brand); color:#111; text-align:center; }
-  .schedule-table th, .schedule-table td{ border-color:#cfd3a9 !important; vertical-align:middle; text-align:center }
+
+  .schedule-table thead th{
+    background:var(--brand);
+    color:#111;
+    text-align:center;
+  }
+  .schedule-table th,
+  .schedule-table td{
+    border-color:#cfd3a9 !important;
+    vertical-align:middle;
+    text-align:center;
+  }
+
+  /* Cột Shift thu gọn + căn giữa */
+  .shift-col{
+    width: 150px;
+    text-align:center;
+  }
+  .shift-cell{
+    text-align:center;
+    padding-left:0;
+    padding-right:0;
+  }
+
   .cell-branch{ display:block; font-weight:700; }
   .muted{ color:#9aa3a3 }
+
+  /* ===== Hàng trên cùng: tiêu đề + điều hướng tuần ===== */
+  .header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    margin-bottom:.5rem;
+    flex-wrap:wrap;
+  }
+
+  .schedule-nav .btn{
+    border-radius:999px;
+    padding:.35rem .85rem;
+    font-weight:700;
+  }
+
+  .date-pill{
+    border-radius:999px;
+    border:2px solid var(--edge);
+    background:#fdfcf6;
+    padding:.35rem .9rem;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+  }
+
+  /* ===== Hàng 2: Branch filter (trái) + Approve (phải) ===== */
+  .filter-approve-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    margin-bottom:1rem;
+    flex-wrap:wrap;
+  }
+
+  /* Select Branch: nhỏ hơn + chữ căn giữa */
+  .filter-branch{
+    min-width: 160px;
+    border-radius:999px;
+    border:2px solid var(--edge);
+    padding:.3rem .9rem;
+    font-size:.9rem;
+    text-align:center;
+    text-align-last:center; /* để chữ ở giữa trong nhiều browser */
+  }
+  .filter-branch:focus{
+    box-shadow:0 0 0 2px #e4e8d2;
+    border-color:var(--brand);
+  }
+
+  .schedule-approve-btn{
+    border-radius:999px;
+    font-weight:800;
+    white-space:nowrap;
+  }
 </style>
 {% endblock %}
 
@@ -21,27 +101,59 @@
   </div>
 
   <div class="col-lg-9 col-md-8">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    {% with current_branch=request.GET.branch %}
+
+    <!-- Hàng 1: tiêu đề + điều hướng tuần -->
+    <div class="header-row">
       <h2 class="h5 m-0 fw-bold">SCHEDULE MANAGEMENT</h2>
 
-      <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-outline-dark btn-sm" href="?start={{ prev_start }}">&laquo; Prev week</a>
-        <span class="badge rounded-pill px-3 py-2 bg-light text-dark">
-          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
-          <i class="bi bi-calendar-week ms-2"></i>
-        </span>
-        <a class="btn btn-outline-dark btn-sm" href="?start={{ next_start }}">Next week &raquo;</a>
+      <div class="schedule-nav d-flex align-items-center gap-2">
+        <a class="btn btn-outline-brand btn-sm"
+           href="?start={{ prev_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+          « Prev week
+        </a>
 
-        <a class="btn btn-outline-dark d-flex align-items-center"
-           href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}">
-          <span class="me-2">Approve next-week schedule</span>
-          <i class="bi bi-pencil-square"></i>
-          {% if pending|add:0 > 0 %}
-            <span class="badge text-bg-danger ms-2">{{ pending }}</span>
-          {% endif %}
+        <span class="date-pill">
+          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
+          <i class="bi bi-calendar-week"></i>
+        </span>
+
+        <a class="btn btn-outline-brand btn-sm"
+           href="?start={{ next_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+          Next week »
         </a>
       </div>
     </div>
+
+    <!-- Hàng 2: Branch filter (trái) + Approve (phải) -->
+    <div class="filter-approve-row">
+      <form method="get" class="d-flex align-items-center gap-2">
+        <label class="small fw-semibold text-muted mb-0">Branch</label>
+        <select name="branch" class="form-select form-select-sm filter-branch"
+                onchange="this.form.submit()">
+          <option value="">All branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}"
+              {% if current_branch|default:'' == b.id|stringformat:'s' %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <!-- giữ tuần hiện tại khi đổi branch -->
+        <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}">
+      </form>
+
+      <a class="btn btn-outline-brand schedule-approve-btn d-flex align-items-center"
+         href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+        <span class="me-2">Approve Schedule</span>
+        <i class="bi bi-pencil-square"></i>
+        {% if pending|add:0 > 0 %}
+          <span class="badge text-bg-danger ms-2">{{ pending }}</span>
+        {% endif %}
+      </a>
+    </div>
+
+    {% endwith %}
 
     {% include "includes/_messages.html" %}
 
@@ -55,11 +167,12 @@
           <table class="table table-bordered m-0 schedule-table">
             <thead>
               <tr>
-                <th style="width:220px;">Shift</th>
+                <th class="shift-col">Shift</th>
                 {% for d in days %}
                   <th>
                     <div class="fw-semibold">{{ d|date:"D" }}</div>
-                    <div class="small text-muted">{{ d|date:"d/m" }}</div>
+                    {# ngày bên dưới thứ: để màu trắng #}
+                    <div class="small text-white">{{ d|date:"d/m" }}</div>
                   </th>
                 {% endfor %}
               </tr>
@@ -67,11 +180,10 @@
             <tbody>
               {% for row in grid_rows %}
                 <tr>
-                  <th class="text-start ps-3">{{ row.label }}</th>
+                  <th class="shift-cell">{{ row.label }}</th>
                   {% for c in row.cols %}
                     <td>
                       {% if c.entries %}
-                        {# Có nhiều nhân viên cùng ca/ngày: liệt kê mỗi dòng một người kèm branch #}
                         {% for item in c.entries %}
                           <div class="tiny fw-semibold">
                             On
@@ -89,11 +201,11 @@
                 </tr>
               {% endfor %}
             </tbody>
-
           </table>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

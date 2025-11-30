@@ -2252,6 +2252,9 @@ def admin_schedule(request):
     staff_id = request.GET.get("staff")
     active_staff = get_object_or_404(User, pk=staff_id, role=User.Role.STAFF) if staff_id else None
 
+    # --- lọc theo chi nhánh (tùy chọn) ---
+    branch_id = request.GET.get("branch")  # string id, dùng để filter queryset & giữ lại trên URL
+
     # --- khoảng tuần đang xem ---
     try:
         qs_start = request.GET.get("start")
@@ -2278,16 +2281,19 @@ def admin_schedule(request):
             work_date__range=(next_ws, next_we),
             status=getattr(STATUS, "PENDING", None),
         )
+        # nếu đang lọc branch thì chỉ approve lịch của branch đó
+        if branch_id:
+            pending_qs = pending_qs.filter(branch_id=branch_id)
+
         count = pending_qs.count()
         pending_qs.update(
             status=getattr(STATUS, "APPROVED", None),
             approved_by=request.user,
         )
-        messages.success(
-            request,
-            f"Đã phê duyệt {count} ca làm tuần {next_ws:%d/%m}–{next_we:%d/%m}."
-        )
-        return redirect(f"{request.path}?start={week_start.isoformat()}")
+        back = f"{request.path}?start={week_start.isoformat()}"
+        if branch_id:
+            back += f"&branch={branch_id}"
+        return redirect(back)
 
     # ========== ACTION: save single cell ==========
     if request.method == "POST" and request.POST.get("action") != "approve":
@@ -2320,6 +2326,8 @@ def admin_schedule(request):
             back = f"{request.path}?start={week_start.isoformat()}"
             if active_staff:
                 back += f"&staff={active_staff.id}"
+            if branch_id:
+                back += f"&branch={branch_id}"
             return redirect(back)
         else:
             messages.error(request, "Cập nhật thất bại. Vui lòng kiểm tra lại các trường.")
@@ -2332,6 +2340,8 @@ def admin_schedule(request):
     )
     if active_staff:
         sched_qs = sched_qs.filter(staff=active_staff)
+    if branch_id:
+        sched_qs = sched_qs.filter(branch_id=branch_id)
 
     # map nhanh: (staff_id, 'YYYY-MM-DD', shift) -> schedule object
     schedule_map = {
@@ -2346,11 +2356,16 @@ def admin_schedule(request):
         work_date__range=(week_start, week_end),
         status=StaffSchedule.Status.APPROVED
     )
+    # lọc theo branch nếu có
+    if branch_id:
+        approved_qs = approved_qs.filter(branch_id=branch_id)
+
     for s in approved_qs:
         cell[(s.work_date, s.shift)].append({
             "branch": s.branch.name if s.branch else "",
             "staff":  getattr(s.staff, "full_name", "") or s.staff.username
         })
+
     grid_rows = []
     for code, label in shifts:  # [('MORNING','Morning'), ...]
         cols = []
@@ -2360,13 +2375,17 @@ def admin_schedule(request):
                 "entries": cell.get((d, code), [])  # list[{branch, staff}]
             })
         grid_rows.append({"code": code, "label": label, "cols": cols})
+
     # --- số yêu cầu PENDING của tuần kế tiếp (badge ở nút Approve) ---
     next_ws = week_start + timedelta(days=7)
     next_we = next_ws + timedelta(days=6)
-    pending = StaffSchedule.objects.filter(
+    pending_qs = StaffSchedule.objects.filter(
         work_date__range=(next_ws, next_we),
         status=getattr(STATUS, "PENDING", None),
-    ).count()
+    )
+    if branch_id:
+        pending_qs = pending_qs.filter(branch_id=branch_id)
+    pending = pending_qs.count()
 
     ctx = {
         "form": form,
@@ -2384,13 +2403,12 @@ def admin_schedule(request):
         "pending": pending,
         "STATUS": STATUS,
 
-        # cho template kiểu “bảng theo staff” (nếu còn dùng):
         "schedule_map": schedule_map,
-        # cho template kiểu “3 hàng × 7 cột” (hiển thị branch dưới ca):
         "cell": cell,
         "grid_rows": grid_rows,
     }
     return render(request, "admin_site/schedule.html", ctx)
+
 @never_cache
 @login_required
 @user_passes_test(is_admin)
