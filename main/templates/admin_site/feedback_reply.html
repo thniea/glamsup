@@ -5,10 +5,68 @@
 
 {% block head_extra %}
 <style>
-  :root{ --brand:#a5aa7f; --bg:#f6f5ec; --olive:#2b3220; }
-  body{ background:var(--bg);font-family:'Nunito',sans-serif; }
-  .fb-card{ background:#fdfcf6; border:2px solid #a3a88b; border-radius:12px; padding:1rem; }
-  .fb-avatar{ width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff; }
+  :root{
+    --brand:#a5aa7f;   /* olive nhạt – nút chính */
+    --bg:#f6f5ec;
+  }
+  body{
+    background:var(--bg);
+    font-family:'Nunito',sans-serif;
+  }
+
+  /* Khung feedback trên */
+  .fb-card{
+    background:#fdfcf6;
+    border:2px solid #a3a88b;
+    border-radius:12px;
+    padding:1rem;
+  }
+
+  .fb-avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid #fff;
+  }
+
+  /* Nút SAVE – giống Response */
+  .btn-save{
+    background:var(--brand);
+    color:#fff;
+    font-weight:800;
+    border:none;
+    border-radius:999px;
+    padding:.45rem 1.4rem;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    transition:.2s;
+  }
+  .btn-save:hover{
+    filter:brightness(.96);
+    color:#fff;
+  }
+
+  /* Nút CANCEL – bo tròn + màu giống Save */
+  .btn-cancel{
+    background:#fff;
+    color:var(--brand);
+    border:2px solid var(--brand);
+    font-weight:800;
+    border-radius:999px;
+    padding:.45rem 1.4rem;
+    transition:.2s;
+  }
+  .btn-cancel:hover{
+    background:#fafafa;
+    color:var(--brand);
+  }
+
+  /* Khung reply bên dưới giống fb-card */
+  .reply-card{
+    background:#fdfcf6 !important;
+    border:2px solid #a3a88b !important;
+    border-radius:12px !important;
+  }
 </style>
 {% endblock %}
 
@@ -21,6 +79,7 @@
   <div class="col-lg-9 col-md-8">
     <h3 class="text-center fw-bold mb-3">REPLY FEEDBACK</h3>
 
+    <!-- Khung feedback -->
     <div class="fb-card mb-3">
       <div class="d-flex gap-2 mb-2">
         <img src="{{ review.customer.avatar_url }}" class="fb-avatar" alt="">
@@ -33,21 +92,35 @@
           </div>
         </div>
       </div>
-      <div class="mb-2">
-        {{ review.comment }}
-      </div>
+      <div class="mb-2">{{ review.comment }}</div>
+
       {% if review.image %}
-        <img src="{{ review.image.url }}" style="max-width:160px;border-radius:8px;border:2px solid #c9cda9;">
+        <img src="{{ review.image.url }}"
+             style="max-width:160px;border-radius:8px;border:2px solid #c9cda9;">
       {% endif %}
     </div>
 
-    <form method="post" class="card p-3">
+    <!-- Form admin reply -->
+    <form method="post" class="reply-card p-3">
       {% csrf_token %}
+
       <div class="mb-2 fw-bold">Admin reply</div>
-      <textarea name="admin_reply" rows="4" class="form-control">{{ review.admin_reply }}</textarea>
-      <div class="text-end mt-3">
-        <a href="{% url 'main:admin_feedback' %}" class="btn btn-outline-secondary me-2">Cancel</a>
-        <button type="submit" class="btn btn-success">Save</button>
+        <textarea name="admin_reply" rows="5" class="form-control">
+        {% if review.admin_reply %}
+        {{ review.admin_reply }}
+        {% else %}
+        Cảm ơn bạn đã tin tưởng và chọn GlamUp Nails là điểm đến để chăm sóc 💅✨
+        Nếu bạn có bất kỳ thắc mắc hoặc vấn đề nào sau khi sử dụng dịch vụ,
+        hãy liên hệ với chúng tôi để được hỗ trợ sớm nhất nhé ❤️
+        Chúc bạn một ngày tốt lành! 🌸🌼
+        {% endif %}
+        </textarea>
+
+
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="{% url 'main:admin_feedback' %}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-save">Save</button>
       </div>
     </form>
   </div>
