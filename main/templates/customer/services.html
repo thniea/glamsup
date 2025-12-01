@@ -39,20 +39,28 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:640px){ .grid{grid-template-columns:1fr} }
-.card:hover{
-    transform: translateY(-4px);
-    box-shadow: 0 10px 22px rgba(0,0,0,0.10);
-    border-color: #a5aa7f;
-}
-  .card{border:none ;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 3px rgba(0,0,0,.04); transition: all .25s ease;}
-  .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}         /* Ảnh vuông */
-  .body{padding:8px 12px}                                                     /* mô tả gọn */
-  .c-row{display:flex;justify-content:space-between;gap:10px;align-items:center} /* tránh đụng .row của footer */
+
+  .card{border:none;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 3px rgba(0,0,0,.04);transition:all .25s ease;}
+  .card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 10px 22px rgba(0,0,0,0.10);
+    border-color:#a5aa7f;
+  }
+
+  .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+
+  .body{padding:8px 12px}
+  .c-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
   .name{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
   .price{font-weight:900}
   .c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-  .stars{color:#f5b800;font-size:16px;letter-spacing:2px;line-height:1}
 
+  /* NOTE: khối hiển thị “★ 4.7” + số review */
+  .rating-box{font-size:.85rem;font-weight:600;color:#2b3220;}
+  .rating-main{display:flex;align-items:center;gap:4px;line-height:1;}
+  .rating-main .star{color:#f5b800;font-size:.95rem;}
+  .rating-main .score{font-weight:800;}
+  .rating-meta{font-size:.75rem;color:#6c6f55;margin-top:1px;}
 
   .hide{display:none !important}
   .empty{padding:18px;border:2px dashed var(--brand-strong);border-radius:12px;background:#fff}
@@ -104,25 +112,30 @@
                    data-price="{{ s.price|floatformat:0 }}"
                    data-slug="{{ s.slug }}">
             <img class="thumb" src="{{ s.thumbnail_url }}" alt="{{ s.name }}">
+
             <div class="body">
               <div class="c-row">
                 <div class="name">{{ s.name }}</div>
                 <div class="price">{{ s.price|floatformat:0 }}₫</div>
               </div>
+
               <div class="c-foot">
-                {# ⭐ trung bình sao – chỉ cần Service có property avg_rating là ok #}
-                <div class="stars" aria-label="{{ s.avg_rating|default:0|floatformat:1 }} out of 5">
-                  {% with r=s.avg_rating|default:0 %}
-                    {% for _ in "12345"|make_list %}
-                      {% if forloop.counter <= r|floatformat:0 %}
-                        ★
-                      {% else %}
-                        ☆
-                      {% endif %}
-                    {% endfor %}
-                  {% endwith %}
+                <!-- NOTE: ⭐ + điểm trung bình nằm dưới ảnh -->
+                <div class="rating-box">
+                  {% if s.total_reviews > 0 %}
+                    <div class="rating-main"
+                         aria-label="{{ s.avg_rating|floatformat:1 }} out of 5">
+                      <span class="star">★</span>
+                      <span class="score">{{ s.avg_rating|floatformat:1 }}</span>
+                    </div>
+                    <div class="rating-meta">
+                      {{ s.total_reviews }} review{{ s.total_reviews|pluralize:"s" }}
+                    </div>
+                  {% else %}
+                    <div class="rating-meta">No rating yet</div>
+                  {% endif %}
                 </div>
-                {# dùng hệ button chung: pill radius + shadow + hover translate #}
+
                 <a class="btn btn-brand btn-sm"
                    href="{% url 'main:service_detail' s.slug %}">
                   Book Now
@@ -154,7 +167,7 @@
   const heroDesc  = $('#heroDesc');
   const HERO_COMMON = "{% static 'images/hero_spring.jpg' %}";
 
-  const state = { cat:'all', sort:'', q:'' };   // mặc định ALL
+  const state = { cat:'all', sort:'', q:'' };
 
   function setHero(cat){
     heroImg.src = HERO_COMMON;
@@ -223,7 +236,7 @@
       const match = catBtns.find(b => b.dataset.cat===cat);
       if (match) match.click(); else render();
     } else {
-      render(); // default 'all'
+      render();
     }
   })();
 })();
