@@ -5,122 +5,103 @@
 
 {% block head_extra %}
 <style>
-  :root{
-    --brand:#a5aa7f; --bg:#f6f5ec; --ink:#2b3220;
-    --btn:#7e8658;          /* màu nút đậm hơn */
-    --btn-hover:#6b724b;    /* hover đậm */
+  /* giống style account customer */
+  .account-sidebar .avatar{
+    width:72px;height:72px;border-radius:50%;
+    border:3px solid #fff;object-fit:cover;background:#f6f6f6;
   }
-  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+  .account-menu a{ display:flex;align-items:center;gap:.6rem;padding:.55rem .9rem;border-radius:10px;font-weight:800;color:var(--ink); text-decoration:none; }
+  .account-menu a .mi{ width:1.4rem; text-align:center; font-size:1.1rem; color:#6b705c; }
+  .account-menu a:hover{ background:#eef1dd; }
+  .account-menu a.active{ background:#eef1dd; box-shadow:inset 0 0 0 2px var(--edge); }
 
-  .card-soft{ border:2px solid #cfd3a9; border-radius:16px; background:#fff; overflow:hidden; }
-  /* header của mỗi card: dùng flex để đặt nút bên phải */
-  .sec-title{
-    background:#cfd3a9; color:#1d1e1a; font-weight:900;
-    padding:.6rem 1rem; display:flex; align-items:center; justify-content:space-between;
+  .panel{ position:relative; margin-bottom:1.25rem; }
+  .panel-header{
+    background:var(--brand); color:#111; font-weight:900; font-size:1.05rem;
+    padding:.65rem .9rem; border-radius:10px 10px 0 0; border:2px solid var(--edge); border-bottom:none;
+    display:flex; align-items:center; justify-content:space-between;
   }
-  .sec-title h6{ margin:0; font-weight:900; letter-spacing:.3px; }
-  .btn-edit{
-    background:var(--btn); color:#fff; font-weight:800;
-    border:2px solid rgba(0,0,0,.08); border-radius:10px;
-    padding:.45rem .9rem; line-height:1;
-    margin-top:2px;
+  .panel-body{
+    padding:1rem 1.1rem; border:2px solid var(--edge); border-top:none;
+    border-radius:0 0 10px 10px; background:#fff;
   }
-  .btn-edit:hover{ background:var(--btn-hover); color:#fff; }
-  .btn-plain{ background:#fff; color:#1d1e1a; border:2px solid #9faa78; }
-  .btn-plain:hover{ background:#f3f5ea; }
+  .panel-actions{ display:flex; gap:.5rem; }
 
-  .kv{ display:flex; gap:1rem; padding:.6rem 1rem; }
-  .kv .k{ width:180px; color:#6b6f63; font-weight:800; }
-  .kv .v{ color:#15160f; font-weight:700; }
+  .kv{ display:grid; grid-template-columns:220px 1fr; row-gap:.4rem; }
+  @media (max-width: 991px){ .kv{ grid-template-columns:1fr; } }
 
-  .upcoming .item{
-    background:#f8f9f2; border:2px solid #e0e3cf; border-radius:12px;
-    padding:.6rem .8rem; font-weight:700;
-  }
+  .badge-tier{ background:#868b61; color:#fff; font-weight:800; border-radius:8px; padding:.1rem .5rem; }
 
-  /* Avatar (giữ lại nếu mai mốt xài chỗ khác) */
-  .avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; border:2px solid #a5aa7f; }
-  .avatar-wrap{ position:relative; display:inline-block; }
-  .btn-change-avatar{
-    position:absolute; bottom:-6px; right:-6px;
-    background:var(--btn); color:#fff; border:none; border-radius:999px;
-    padding:.25rem .5rem; font-size:.8rem; line-height:1;
+  .btn-soft{
+    background:#eef1dd; border:1px solid var(--edge); border-radius:999px;
+    padding:.35rem .9rem; font-weight:800; font-size:.85rem; color:var(--ink);
   }
-  .btn-change-avatar:hover{ background:var(--btn-hover); }
+  .btn-soft:hover{ background:#e3e7cc; }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row g-4">
-
   <!-- Sidebar -->
   <div class="col-lg-3 col-md-4">
     {% include "includes/_sidebar_staff.html" with active="account" %}
   </div>
 
   <!-- Main -->
-  <div class="col-lg-9 col-md-8">
-
-    {# ===== ĐÃ BỎ BLOCK HEADER AVATAR + NAME Ở ĐÂY ===== #}
+  <div class="col-md-8 col-lg-9 d-grid gap-4">
 
     <!-- Account information -->
-    <div class="card-soft mb-3">
-      <div class="sec-title">
-        <h6>Account information</h6>
-        <div class="d-flex gap-2">
-          <button class="btn btn-plain btn-sm" data-bs-toggle="modal" data-bs-target="#changePwdModal">
+    <div class="panel">
+      <div class="panel-header">
+        <span>Account information</span>
+        <div class="panel-actions">
+          <button class="btn btn-soft btn-sm" data-bs-toggle="modal" data-bs-target="#changePwdModal">
             Change password
           </button>
-          <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editAccountModal">
-            Edit Information
+          <button class="btn btn-soft btn-sm" data-bs-toggle="modal" data-bs-target="#editAccountModal">
+            Edit Account
           </button>
         </div>
       </div>
-      <div class="kv">
-        <div class="k">Account name</div>
-        <div class="v">
-          {{ staff.full_name|default:request.user.full_name|default:request.user.username }}
-        </div>
-      </div>
-      <div class="kv">
-        <div class="k">Password</div><div class="v">********</div>
-      </div>
-      <div class="kv">
-        <div class="k">Email</div>
-        <div class="v">
-          {{ staff.email|default:request.user.email|default:"—" }}
+      <div class="panel-body">
+        <div class="kv">
+          <div>Account name</div>
+          <div class="fw-semibold">
+            {{ staff.full_name|default:request.user.full_name|default:request.user.username }}
+          </div>
+
+          <div>Password</div><div>**********</div>
+
+          <div>Email</div>
+          <div>{{ staff.email|default:request.user.email|default:"—" }}</div>
         </div>
       </div>
     </div>
 
     <!-- Personal Information -->
-    <div class="card-soft mb-4">
-      <div class="sec-title">
-        <h6>Personal Information</h6>
-        <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editPersonalModal">
-          Edit Information
-        </button>
+    <div class="panel">
+      <div class="panel-header">
+        <span>Personal Information</span>
+        <div class="panel-actions">
+          <button class="btn btn-soft btn-sm" data-bs-toggle="modal" data-bs-target="#editPersonalModal">
+            Edit Personal
+          </button>
+        </div>
       </div>
-      <div class="kv">
-        <div class="k">Full name</div>
-        <div class="v">{{ staff.full_name|default:"—" }}</div>
-      </div>
-      <div class="kv">
-        <div class="k">Email</div>
-        <div class="v">{{ staff.email|default:"—" }}</div>
-      </div>
-      <div class="kv">
-        <div class="k">Phone number</div>
-        <div class="v">{{ staff.phone|default:"—" }}</div>
-      </div>
-      <div class="kv">
-        <div class="k">Address</div>
-        <div class="v">{{ staff.address|default:"—" }}</div>
-      </div>
-      <div class="kv">
-        <div class="k">Date of birth</div>
-        <div class="v">
-          {% if staff.dob %}{{ staff.dob|date:"d/m/Y" }}{% else %}—{% endif %}
+      <div class="panel-body">
+        <div class="kv">
+          <div>Full name</div>
+          <div class="fw-semibold">{{ staff.full_name|default:"—" }}</div>
+
+          <div>Email</div><div>{{ staff.email|default:"—" }}</div>
+
+          <div>Phone number</div><div>{{ staff.phone|default:"—" }}</div>
+
+          <div>Address</div><div>{{ staff.address|default:"—" }}</div>
+
+          <div>Date of birth</div>
+          <div>{% if staff.dob %}{{ staff.dob|date:"d/m/Y" }}{% else %}—{% endif %}</div>
         </div>
       </div>
     </div>
@@ -132,27 +113,27 @@
 
 <!-- 1) Edit account -->
 <div class="modal fade" id="editAccountModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <form class="modal-content" method="post" action="">
       {% csrf_token %}
       <input type="hidden" name="action" value="save_account">
       <div class="modal-header">
-        <h5 class="modal-title">Edit account</h5>
+        <h5 class="modal-title">Edit Account</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Full name</label>
-          <input name="full_name" class="form-control" value="{{ request.user.full_name }}">
+          <label class="form-label fw-bold">Full name</label>
+          <input type="text" name="full_name" class="form-control" value="{{ request.user.full_name }}">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Email</label>
+          <label class="form-label fw-bold">Email</label>
           <input type="email" name="email" class="form-control" value="{{ request.user.email }}">
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-edit">Save</button>
+        <button class="btn btn-brand">Save changes</button>
       </div>
     </form>
   </div>
@@ -160,32 +141,32 @@
 
 <!-- 2) Edit personal information -->
 <div class="modal fade" id="editPersonalModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <form class="modal-content" method="post" action="">
       {% csrf_token %}
       <input type="hidden" name="action" value="save_personal">
       <div class="modal-header">
-        <h5 class="modal-title">Edit personal information</h5>
+        <h5 class="modal-title">Edit Personal</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Phone number</label>
-          <input name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
+          <label class="form-label fw-bold">Phone number</label>
+          <input type="text" name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Address</label>
-          <input name="address" class="form-control" value="{{ request.user.address }}">
+          <label class="form-label fw-bold">Address</label>
+          <input type="text" name="address" class="form-control" value="{{ request.user.address }}">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Date of birth</label>
+          <label class="form-label fw-bold">Date of birth</label>
           <input type="date" name="date_of_birth" class="form-control"
                  value="{{ staff.dob|date:'Y-m-d' }}">
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-edit">Save</button>
+        <button class="btn btn-brand">Save changes</button>
       </div>
     </form>
   </div>
@@ -193,7 +174,7 @@
 
 <!-- 3) Change password -->
 <div class="modal fade" id="changePwdModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <form class="modal-content" method="post" action="">
       {% csrf_token %}
       <input type="hidden" name="action" value="change_password">
@@ -203,22 +184,22 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Current password</label>
+          <label class="form-label fw-bold">Current password</label>
           <input type="password" name="old_password" class="form-control" required>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">New password</label>
+          <label class="form-label fw-bold">New password</label>
           <input type="password" name="new_password1" class="form-control" required>
           <div class="form-text">Mật khẩu đủ mạnh (tối thiểu 8 ký tự, khó đoán…).</div>
         </div>
-        <div>
-          <label class="form-label fw-semibold">Confirm new password</label>
+        <div class="mb-1">
+          <label class="form-label fw-bold">Confirm new password</label>
           <input type="password" name="new_password2" class="form-control" required>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-edit">Update password</button>
+        <button class="btn btn-brand">Update password</button>
       </div>
     </form>
   </div>
