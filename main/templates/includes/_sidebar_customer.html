@@ -1,5 +1,5 @@
 {% load static %}
-{% block head_extra %}
+
 <style>
   :root{
     --brand:#a5aa7f;   /* olive nhạt */
@@ -17,10 +17,45 @@
     padding:16px;
     position:sticky; top:1rem;
   }
-  .bo-profile .bo-avatar{
-    width:72px;height:72px;border-radius:50%;
-    object-fit:cover;border:3px solid #fff;
+
+  /* avatar trong sidebar */
+  .bo-avatar-wrap{
+    position:relative;
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    overflow:hidden;
+    border:3px solid #fff;
+    box-shadow:0 0 0 2px #cfd3a9;
+    cursor:pointer;
+    background:#fdfcf6;
   }
+  .bo-avatar{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .bo-avatar-edit{
+    position:absolute;
+    right:0;
+    bottom:0;
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    background:#a5aa7f;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);
+  }
+  .bo-avatar-edit i{ line-height:1; }
+  .bo-avatar-input{ display:none; }
+
   .bo-profile .bo-role{ color:#6c7551; font-weight:700; }
 
   .bo-menu{ margin-top:12px }
@@ -30,7 +65,10 @@
     color:var(--ink); text-decoration:none; font-weight:800;
     transition:background .15s, box-shadow .15s;
   }
-  .bo-item:hover{ background:var(--chip);text-decoration: none }
+  .bo-item:hover{
+    background:var(--chip);
+    text-decoration: none;
+  }
   .bo-item.active{
     background:var(--chip);
     box-shadow: inset 0 0 0 2px #d6d1b8;
@@ -43,14 +81,37 @@
     flex:0 0 36px;
   }
 </style>
-{% endblock %}
+
 <div class="bo-sidebar">
   <div class="bo-profile d-flex align-items-center gap-3 mb-3">
-    {% if request.user.avatar %}
-      <img src="{{ request.user.avatar.url }}" class="bo-avatar" alt="avatar">
-    {% else %}
-      <img src="{% static 'img/avatar-placeholder.png' %}" class="bo-avatar" alt="avatar">
-    {% endif %}
+
+    {# FORM UPLOAD AVATAR – click vào avatar để chọn ảnh #}
+    <form id="avatarForm"
+          method="post"
+          action="{% url 'main:customer_account' %}"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload_avatar">
+
+      <label for="id_avatar_input" class="bo-avatar-wrap" title="Change avatar">
+        {% if request.user.avatar %}
+          <img src="{{ request.user.avatar.url }}" class="bo-avatar" alt="avatar">
+        {% else %}
+          <img src="{% static 'img/avatar-placeholder.png' %}" class="bo-avatar" alt="avatar">
+        {% endif %}
+        <span class="bo-avatar-edit">
+          <i class="bi bi-camera-fill"></i>
+        </span>
+      </label>
+
+      <input id="id_avatar_input"
+             type="file"
+             name="avatar"
+             accept="image/*"
+             class="bo-avatar-input"
+             onchange="document.getElementById('avatarForm').submit();">
+    </form>
+
     <div>
       <div class="bo-role small">
         Customer
@@ -63,24 +124,26 @@
 
   <nav class="bo-menu d-grid gap-2">
 
+    {# 1. PROFILE / ACCOUNT #}
+    <a class="bo-item {% if active == 'account' %}active{% endif %}"
+       href="{% url 'main:customer_account' %}">
+      <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
+      Profile
+    </a>
+
     {# 2. MY APPOINTMENTS #}
     <a class="bo-item {% if active == 'my_appointments' %}active{% endif %}"
        href="{% url 'main:my_appointments' %}">
       <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
       My Appointments
     </a>
-</a>
-      <a class="bo-item {% if active == 'loyalty' %}active{% endif %}"
+
+    {# 3. LOYALTY #}
+    <a class="bo-item {% if active == 'loyalty' %}active{% endif %}"
        href="{% url 'main:loyalty_history' %}">
       <span class="bo-ic"><i class="bi bi-star"></i></span>
       Loyalty
     </a>
-    {# 1. ACCOUNT OVERVIEW #}
-    <a class="bo-item {% if active == 'account' %}active{% endif %}"
-       href="{% url 'main:customer_account' %}">
-      <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
-      Profile
-    </a>
-    </a>
+
   </nav>
 </div>

@@ -38,7 +38,7 @@
     padding:.6rem .8rem; font-weight:700;
   }
 
-  /* Avatar */
+  /* Avatar (giữ lại nếu mai mốt xài chỗ khác) */
   .avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; border:2px solid #a5aa7f; }
   .avatar-wrap{ position:relative; display:inline-block; }
   .btn-change-avatar{
@@ -61,29 +61,7 @@
   <!-- Main -->
   <div class="col-lg-9 col-md-8">
 
-    <!-- Header (avatar + name) -->
-    <div class="d-flex align-items-center gap-3 mb-3">
-      <div class="avatar-wrap">
-        <img class="avatar" src="{{ staff.avatar_url|default:'/static/img/avatar-placeholder.png' }}" alt="Avatar">
-        <form method="post" enctype="multipart/form-data" action="">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="upload_avatar">
-          <input type="file" id="fileAvatar" name="avatar" accept="image/*" class="visually-hidden" onchange="this.form.submit()">
-          <label for="fileAvatar" class="btn-change-avatar" title="Đổi ảnh">✎</label>
-        </form>
-      </div>
-      <div>
-        <div class="fw-black fs-5" style="letter-spacing:.3px;">
-          {{ staff.display_name|default:request.user.full_name|default:request.user.username }}
-        </div>
-           {% if is_receptionist %}
-        <div class="text-muted small">Receptionist</div>
-          {%else%}
-          <div class="text-muted small">Technician</div>
-          {%endif%}
-      </div>
-    </div>
-
+    {# ===== ĐÃ BỎ BLOCK HEADER AVATAR + NAME Ở ĐÂY ===== #}
 
     <!-- Account information -->
     <div class="card-soft mb-3">
@@ -98,15 +76,22 @@
           </button>
         </div>
       </div>
-      <div class="kv"><div class="k">Account name</div><div class="v">
-        {{ staff.full_name|default:request.user.full_name|default:request.user.username }}
-      </div></div>
-      <div class="kv"><div class="k">Password</div><div class="v">********</div></div>
-      <div class="kv"><div class="k">Email</div><div class="v">
-        {{ staff.email|default:request.user.email|default:"—" }}
-      </div></div>
+      <div class="kv">
+        <div class="k">Account name</div>
+        <div class="v">
+          {{ staff.full_name|default:request.user.full_name|default:request.user.username }}
+        </div>
+      </div>
+      <div class="kv">
+        <div class="k">Password</div><div class="v">********</div>
+      </div>
+      <div class="kv">
+        <div class="k">Email</div>
+        <div class="v">
+          {{ staff.email|default:request.user.email|default:"—" }}
+        </div>
+      </div>
     </div>
-
 
     <!-- Personal Information -->
     <div class="card-soft mb-4">
@@ -116,13 +101,28 @@
           Edit Information
         </button>
       </div>
-      <div class="kv"><div class="k">Full name</div><div class="v">{{ staff.full_name|default:"—" }}</div></div>
-      <div class="kv"><div class="k">Email</div><div class="v">{{ staff.email|default:"—" }}</div></div>
-      <div class="kv"><div class="k">Phone number</div><div class="v">{{ staff.phone|default:"—" }}</div></div>
-      <div class="kv"><div class="k">Address</div><div class="v">{{ staff.address|default:"—" }}</div></div>
-      <div class="kv"><div class="k">Date of birth</div><div class="v">
-        {% if staff.dob %}{{ staff.dob|date:"d/m/Y" }}{% else %}—{% endif %}
-      </div></div>
+      <div class="kv">
+        <div class="k">Full name</div>
+        <div class="v">{{ staff.full_name|default:"—" }}</div>
+      </div>
+      <div class="kv">
+        <div class="k">Email</div>
+        <div class="v">{{ staff.email|default:"—" }}</div>
+      </div>
+      <div class="kv">
+        <div class="k">Phone number</div>
+        <div class="v">{{ staff.phone|default:"—" }}</div>
+      </div>
+      <div class="kv">
+        <div class="k">Address</div>
+        <div class="v">{{ staff.address|default:"—" }}</div>
+      </div>
+      <div class="kv">
+        <div class="k">Date of birth</div>
+        <div class="v">
+          {% if staff.dob %}{{ staff.dob|date:"d/m/Y" }}{% else %}—{% endif %}
+        </div>
+      </div>
     </div>
 
   </div>

@@ -4,25 +4,50 @@
 {% block head_extra %}
 <style>
   :root{
-    --brand:#a5aa7f;   /* olive nhạt */
-    --bg:#f6f5ec;      /* nền sáng */
-    --ink:#2b3220;     /* chữ đậm */
-    --edge:#cfd3a9;    /* viền nhạt */
-    --chip:#f4f3e7;    /* nền active/hover */
+    --brand:#a5aa7f;
+    --bg:#f6f5ec;
+    --ink:#2b3220;
+    --edge:#cfd3a9;
+    --chip:#f4f3e7;
   }
   body{ background:var(--bg); font-family:'Nunito',sans-serif; }
 
-  /* ===== Sidebar (chuẩn theo mockup) ===== */
   .bo-sidebar{
     background:#e1e6cf;
     border-radius:16px;
     padding:16px;
     position:sticky; top:1rem;
   }
-  .bo-profile .bo-avatar{
-    width:72px;height:72px;border-radius:50%;
-    object-fit:cover;border:3px solid #fff;
+
+  /* --- Avatar wrapper mới --- */
+  .bo-avatar-wrap{
+    position:relative;
+    width:72px; height:72px;
+    border-radius:50%;
+    overflow:hidden;
+    border:3px solid #fff;
+    box-shadow:0 0 0 2px #cfd3a9;
+    cursor:pointer;
   }
+  .bo-avatar-wrap img{
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+
+  .bo-avatar-edit{
+    position:absolute;
+    right:0; bottom:0;
+    width:22px; height:22px;
+    border-radius:999px;
+    background:#a5aa7f;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);
+  }
+
+  .bo-avatar-input{ display:none; }
+
   .bo-profile .bo-role{ color:#6c7551; font-weight:700; }
 
   .bo-menu{ margin-top:12px }
@@ -32,7 +57,7 @@
     color:var(--ink); text-decoration:none; font-weight:800;
     transition:background .15s, box-shadow .15s;
   }
-  .bo-item:hover{ background:var(--chip);text-decoration:none }
+  .bo-item:hover{ background:var(--chip); text-decoration:none }
   .bo-item.active{
     background:var(--chip);
     box-shadow: inset 0 0 0 2px #d6d1b8;
@@ -48,15 +73,36 @@
 {% endblock %}
 
 <div class="bo-sidebar">
-  <!-- Header -->
+
+  <!-- Avatar + Info -->
   <div class="bo-profile d-flex align-items-center gap-3 mb-3">
-    {% if request.user.avatar %}
-      <img src="{{ request.user.avatar.url }}" class="bo-avatar" alt="avatar">
-    {% else %}
-      <img src="{% static 'img/avatar-placeholder.png' %}" class="bo-avatar" alt="avatar">
-    {% endif %}
+
+    <!-- FORM UPLOAD AVATAR -->
+    <form id="staffAvatarForm"
+          method="post"
+          action="{% url 'main:staff_account' %}"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload_avatar">
+
+      <label for="id_staff_avatar_input" class="bo-avatar-wrap" title="Change avatar">
+        {% if request.user.avatar %}
+          <img src="{{ request.user.avatar.url }}" alt="avatar">
+        {% else %}
+          <img src="{% static 'img/avatar-placeholder.png' %}" alt="avatar">
+        {% endif %}
+        <span class="bo-avatar-edit"><i class="bi bi-camera-fill"></i></span>
+      </label>
+
+      <input id="id_staff_avatar_input"
+             class="bo-avatar-input"
+             type="file"
+             name="avatar"
+             accept="image/*"
+             onchange="document.getElementById('staffAvatarForm').submit();">
+    </form>
+
     <div>
-      <!-- HIỂN THỊ VAI TRÒ DỰA TRÊN GROUP -->
       <div class="bo-role small">
         {% if is_receptionist %}Receptionist
         {% elif is_technician %}Technician
@@ -69,10 +115,10 @@
     </div>
   </div>
 
-  <!-- Menu -->
+  <!-- MENU -->
   <nav class="bo-menu d-grid gap-2">
+
     {% if is_receptionist %}
-      <!-- Lễ tân: Có Dashboard riêng (Check-in/out) -->
       <a class="bo-item {% if active == 'dashboard' %}active{% endif %}"
          href="{% url 'main:receptionist_dashboard' %}">
         <span class="bo-ic"><i class="bi bi-speedometer2"></i></span>
@@ -80,14 +126,14 @@
       </a>
     {% endif %}
 
+    {% if not is_receptionist %}
+      <a class="bo-item {% if active == 'appointments' %}active{% endif %}"
+         href="{% url 'main:staff_appointments' %}">
+        <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
+        Appointment
+      </a>
+    {% endif %}
 
-{% if not is_receptionist %}
-    <a class="bo-item {% if active == 'appointments' %}active{% endif %}"
-       href="{% url 'main:staff_appointments' %}">
-      <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
-      Appointment
-    </a>
-{% endif %}
     <a class="bo-item {% if active == 'schedule' %}active{% endif %}"
        href="{% url 'main:staff_schedule' %}">
       <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
@@ -100,12 +146,12 @@
       Staff Inbox
     </a>
 
-    <!-- Profile (trước đây là Overall) -->
     <a class="bo-item {% if active == 'account' or active == 'overview' %}active{% endif %}"
        href="{% url 'main:staff_account' %}">
       <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
       Profile
     </a>
+
   </nav>
 
 </div>
