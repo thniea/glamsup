@@ -1,7 +1,7 @@
 {% extends 'base_staff.html' %}
 {% load static %}
 
-{% block title %}Receptionist Dashboard · Glamup Nails{% endblock %}
+{% block title %}APPOINTMENTS · Glamup Nails{% endblock %}
 
 {% block head_extra %}
 
@@ -76,7 +76,7 @@
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Nút về hôm nay (không nằm trong form) -->
         <a href="?date={{ today|date:'Y-m-d' }}"
-           class="btn btn-sm btn-pill btn-brand-outline">
+           class="btn btn-sm btn-pill btn-outline-brand">
           Today’s appointments
         </a>
 
@@ -86,7 +86,7 @@
                  name="date"
                  class="form-control form-control-sm"
                  value="{{ selected_date|date:'Y-m-d' }}">
-          <button class="btn btn-sm btn-pill btn-brand-outline">View</button>
+          <button class="btn btn-sm btn-pill btn-outline-brand">View</button>
         </form>
       </div>
     </div>
