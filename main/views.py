@@ -248,7 +248,7 @@ def login_view(request):
     form = LoginForm(request=request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
         login(request, form.user)
-        messages.success(request, "Đăng nhập thành công.")
+        messages.success(request, "Login successful.")
         # điều hướng nhẹ: admin/staff/customer
         if request.user.is_superuser or request.user.groups.filter(name="Admin").exists():
             return redirect('main:admin_dashboard')
@@ -276,7 +276,7 @@ def signup_view(request):
         user.is_staff = False
         user.save()
         auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        messages.success(request, "Đăng ký thành công. Chào mừng bạn đến GlamUp Nails!")
+        messages.success(request, "Registration successful. Welcome to GlamUp Nails!")
         nxt = request.GET.get("next") or request.POST.get("next")
         return redirect(nxt or 'main:customer_account')
 
@@ -293,7 +293,7 @@ def services(request):
             Service.objects
             .filter(is_active=True)
             .annotate(
-                rating_avg=Avg("reviews__rating"),  # KHÔNG dùng tên avg_rating để khỏi đụng property
+                rating_avg=Avg("reviews__rating"),
                 review_cnt=Count("reviews"),
             )
         )
@@ -324,7 +324,7 @@ def services(request):
         })
 
 
-from django.db.models import Avg  # thêm import này
+from django.db.models import Avg
 
 def service_detail(request, slug):
     s = get_object_or_404(Service, slug=slug, is_active=True)
@@ -343,7 +343,7 @@ def service_detail(request, slug):
         "rating": float(rv.rating),
         "comment": rv.comment,
         "created_at": rv.review_date,
-        "admin_reply": rv.admin_reply,  # 👈 thêm dòng này
+        "admin_reply": rv.admin_reply,
     } for rv in rv_qs[:10]]
 
     addon_qs = Service.objects.filter(is_active=True).exclude(pk=s.pk)[:2]
@@ -358,13 +358,12 @@ def service_detail(request, slug):
             'addons': addons,
             'total_reviews': total_reviews,
             'avg_rating': avg_rating,
-            "id": s.id,  # 👈 thêm
+            "id": s.id,  #
             "slug": (s.slug or str(s.id)),
             # để template dùng khi service chưa có avg
         }
     )
 
-# views.py
 from datetime import datetime, timedelta, time as dtime
 from decimal import Decimal
 from django.contrib import messages
@@ -410,7 +409,7 @@ def _overlap(a_start, a_dur_min, b_start, b_dur_min):
 @user_passes_test(is_customer)
 def book_now(request):
     """
-    GET : nhận ?service=<slug|id> -> render form, prefill ảnh/tên/giá
+    GET : nhận service=<slug|id> -> render form, prefill ảnh/tên/giá
     POST: kiểm tra ca làm & trùng lịch (theo duration), auto-assign staff;
           nếu thanh toán ONLINE => tạo Payment PAID và chuyển qua trang payment (trạng thái ĐÃ THANH TOÁN);
           nếu PAY AT STORE => Payment UNPAID và trang payment hiển thị CHƯA THANH TOÁN.
@@ -451,7 +450,7 @@ def book_now(request):
 
     # ===== POST =====
     if not svc_obj:
-        messages.error(request, "Dịch vụ không hợp lệ hoặc đã ngừng bán.")
+        messages.error(request, "Invalid service or service is no longer available.")
         return redirect("main:services")
 
     branch_id = request.POST.get("branch_id")
@@ -461,7 +460,7 @@ def book_now(request):
     pay_method = (request.POST.get("payment_method") or "ONLINE").upper()
 
     if not (branch_id and date_str and time_str):
-        messages.error(request, "Vui lòng chọn đủ chi nhánh, ngày và giờ.")
+        messages.error(request, "Please select the branch, date, and time.")
         back_qs = f"?service={svc_obj.slug or svc_obj.id}"
         return redirect(request.path + back_qs)
 
@@ -475,7 +474,7 @@ def book_now(request):
         timezone.get_current_timezone()
     )
     if start_dt <= timezone.now():
-        messages.error(request, "Không thể đặt lịch ở thời điểm đã qua. Vui lòng chọn giờ khác.")
+        messages.error(request, "Cannot book an appointment for a past time. Please select a different time.")
         back_qs = f"?service={svc_obj.slug or svc_obj.id}"
         return redirect(request.path + back_qs)
 
@@ -517,7 +516,7 @@ def book_now(request):
 
     free_staff = [st for st in candidates if staff_is_free(st)]
     if not free_staff:
-        messages.error(request, "Hiện không có nhân viên phù hợp khung giờ này. Vui lòng chọn giờ khác.")
+        messages.error(request, "There are currently no staff members available for this time slot. Please choose a different time.")
         back_qs = f"?service={svc_obj.slug or svc_obj.id}"
         return redirect(request.path + back_qs)
 
@@ -551,7 +550,7 @@ def book_now(request):
             method=Payment.Method.ONLINE,
             status=Payment.Status.UNPAID
         )
-        # KHÔNG messages ở đây để tránh 2 banner
+
     else:
         Payment.objects.create(
             appointment=appt,
@@ -559,13 +558,12 @@ def book_now(request):
             method=Payment.Method.CASH,
             status=Payment.Status.UNPAID
         )
-        # KHÔNG messages ở đây; sẽ thông báo sau khi bấm nút "Xác nhận đặt lịch"
 
     # “thông báo” cho Lễ tân & KTV (stub)
     try:
         print(
             f"[ALERT] Receptionist: Booking mới #{appt.id} {appt.appointment_date} {appt.appointment_time} – Khách: {request.user.username}")
-        print(f"[ALERT] Technician: {chosen.username} được phân công cho booking #{appt.id}.")
+        print(f"[ALERT] Technician: {chosen.username} is assigned to booking #{appt.id}.")
     except Exception:
         pass
 
@@ -586,7 +584,6 @@ def _parse_booking_code(code: str) -> int | None:
 
 
 def _code_to_pk(code: str) -> int:
-    # BK000123 -> 123 (đúng với _make_booking_code bạn đang dùng)
     return int(code.replace("BK", "").lstrip("0") or "0")
 
 
@@ -641,7 +638,6 @@ def payment(request, code: str):
         "prefill_email": (u.email or getattr(u, "phone_number", "") or ""),
         "prefill_username": (getattr(u, "full_name", "") or u.username),
     }
-    # KHÔNG render messages ở trang payment
     return render(request, "customer/payment.html", ctx)
 
 
@@ -658,7 +654,7 @@ def payment_complete(request, code: str):
     if pay.method == Payment.Method.ONLINE:
         # Tránh xử lý lại nếu đã thanh toán rồi
         if pay.status == Payment.Status.PAID:
-            messages.info(request, "Đơn hàng này đã được thanh toán trước đó.")
+            messages.info(request, "This order was paid previously")
             return redirect("main:order_result", code=code)
 
         # Giả lập thanh toán thành công
@@ -693,17 +689,16 @@ def payment_complete(request, code: str):
                 points=-points_used,
                 balance_after=lp.current_points,
                 description=(
-                    f"Đổi {points_used} điểm để giảm {discount_vnd:,} VND "
-                    f"cho lịch BK{appt.id:06d}"
+                    f"Redeemed {points_used} points for a {discount_vnd:,} VND "
+                    f"for booking BK{appt.id:06d}"
                 ),
             )
-        # ====== HẾT PHẦN CHỈNH ======
 
-        messages.success(request, "Thanh toán thành công. Lịch hẹn đã được xác nhận.")
+        messages.success(request, "Payment successful. The appointment has been confirmed.")
     else:
         messages.success(
             request,
-            "Đặt lịch thành công. Vui lòng thanh toán tại quầy khi đến cửa hàng."
+            "Booking successful. Please pay at the counter when you arrive at the store."
         )
 
     return redirect("main:order_result", code=code)
@@ -753,7 +748,7 @@ def order_result(request, code: str):
         "original_amount_vnd": total_vnd,  # tổng trước khi chiết khấu (nếu cần)
         "discount_vnd": discount_vnd,      # số tiền giảm từ điểm
         "points_used": points_used,        # số điểm đã dùng
-        "amount_vnd": final_amount_vnd,    # 👉 tổng sau khi chiết khấu (dùng thay cho cũ)
+        "amount_vnd": final_amount_vnd,    #  tổng sau khi chiết khấu (dùng thay cho cũ)
 
         "code": code,
         "paid": (pay.status == Payment.Status.PAID),
@@ -776,7 +771,7 @@ def api_free_slots(request):
     ap_qs = Appointment.objects.filter(appointment_date=d, branch_id=b)
     booked = {a.appointment_time.strftime("%H:%M") for a in ap_qs}
 
-    # Nếu là hôm nay: tự chặn luôn các giờ đã qua
+    # Nếu là hôm nay chặn luôn các giờ đã qua
     today = timezone.localdate()
     if d == today:
         now_t = timezone.localtime().time()
@@ -786,7 +781,7 @@ def api_free_slots(request):
             "16:00","16:30","17:00","17:30","18:00",
         ]
         for s in ALL_TIMES:
-            t = _to_time(s)           # đã có sẵn helper
+            t = _to_time(s)
             if t <= now_t:
                 booked.add(s)
 
@@ -2126,10 +2121,10 @@ def admin_service(request):
         form = ServiceForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, "Đã tạo dịch vụ.")
+            messages.success(request, "Service created successfully.")
             return redirect('main:admin_service')
         else:
-            messages.error(request, "Tạo dịch vụ thất bại. Vui lòng kiểm tra lại.")
+            messages.error(request, "Failed to create service. Please check again.")
     else:
         form = ServiceForm()
 
@@ -2172,10 +2167,10 @@ def admin_service_edit(request, pk):
         form = ServiceForm(request.POST, request.FILES, instance=obj)
         if form.is_valid():
             form.save()
-            messages.success(request, "Đã cập nhật dịch vụ.")
+            messages.success(request, "Service updated successfully.")
             return redirect('main:admin_service')
         else:
-            messages.error(request, "Cập nhật thất bại. Vui lòng kiểm tra lại.")
+            messages.error(request, "Update failed. Please check again.")
     else:
         form = ServiceForm(instance=obj)
 
@@ -2234,7 +2229,7 @@ def admin_service_delete(request, pk):
     if request.method != "POST":
         raise Http404("Invalid method")
     obj.delete()
-    messages.success(request, "Đã xoá dịch vụ.")
+    messages.success(request, "Service deleted successfully.")
     return redirect('main:admin_service')
 
 from collections import defaultdict
@@ -2323,7 +2318,7 @@ def admin_schedule(request):
 
             messages.success(
                 request,
-                f"Đã cập nhật {staff.full_name or staff.username} – {work_date} ({shift})."
+                f"Updated {staff.full_name or staff.username} – {work_date} ({shift})."
             )
             back = f"{request.path}?start={week_start.isoformat()}"
             if active_staff:
@@ -2332,7 +2327,7 @@ def admin_schedule(request):
                 back += f"&branch={branch_id}"
             return redirect(back)
         else:
-            messages.error(request, "Cập nhật thất bại. Vui lòng kiểm tra lại các trường.")
+            messages.error(request, "Update failed. Please check the fields again.")
 
     # --- lịch trong tuần (để render/ghi chú trên lưới theo staff nếu cần) ---
     sched_qs = (
@@ -2450,13 +2445,13 @@ def admin_schedule_review(request):
                 defaults={"status": StaffSchedule.Status.PENDING}
             )
             if branch_id <= 0:
-                messages.error(request, "Vui lòng chọn chi nhánh trước khi phê duyệt.")
+                messages.error(request, "Please select a branch before approving.")
             else:
                 obj.branch = Branch.objects.get(pk=branch_id)
                 obj.status = StaffSchedule.Status.APPROVED
                 obj.approved_by = request.user
                 obj.save(update_fields=["branch", "status", "approved_by"])
-                messages.success(request, "Đã phê duyệt ca làm.")
+                messages.success(request, "Shift approved successfully.")
             return redirect(f"{request.path}?start={week_start.isoformat()}")
 
         elif action == "reject_one":
@@ -2471,7 +2466,7 @@ def admin_schedule_review(request):
                 obj.branch = None
                 obj.approved_by = request.user
                 obj.save(update_fields=["status", "branch", "approved_by"])
-                messages.info(request, "Đã từ chối ca làm.")
+                messages.info(request, "Shift request has been denied.")
             return redirect(f"{request.path}?start={week_start.isoformat()}")
 
     # --- lấy danh sách PENDING của tuần đang xem ---
@@ -2553,7 +2548,7 @@ def admin_feedback_reply(request, pk: int):
         review.admin_reply = reply
         review.admin_replied_at = timezone.now()
         review.save(update_fields=["admin_reply", "admin_replied_at"])
-        messages.success(request, "Đã lưu phản hồi.")
+        messages.success(request, "Response saved successfully.")
         return redirect("main:admin_feedback")
 
     return render(request, "admin_site/feedback_reply.html", {"review": review})
@@ -2588,10 +2583,10 @@ def admin_employee(request):
         form = EmployeeForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)  # set role=STAFF, is_staff=True, add Group "Staff"
-            messages.success(request, f"Đã tạo nhân viên: {user.username}")
+            messages.success(request, f"Employee created: {user.username}")
             return redirect("main:admin_employee")
         else:
-            messages.error(request, "Tạo nhân viên thất bại. Vui lòng kiểm tra lại.")
+            messages.error(request, "Failed to create employee. Please check again.")
     else:
         form = EmployeeForm()
 
@@ -2646,22 +2641,22 @@ def admin_employee_edit(request, user_id: int):
             form = EmployeeForm(request.POST, instance=obj)
             if form.is_valid():
                 form.save()
-                messages.success(request, "Đã cập nhật thông tin nhân viên.")
+                messages.success(request, "Employee information updated successfully.")
                 return redirect("main:admin_employee")
             else:
-                messages.error(request, "Cập nhật thất bại. Vui lòng kiểm tra lại.")
+                messages.error(request, "Update failed. Please check again.")
         # 2.2 Đổi mật khẩu
         elif action == "set_password":
             pwd1 = (request.POST.get("new_password1") or "").strip()
             pwd2 = (request.POST.get("new_password2") or "").strip()
             if not pwd1:
-                messages.error(request, "Vui lòng nhập mật khẩu mới.")
+                messages.error(request, "Please enter a new password.")
             elif pwd1 != pwd2:
-                messages.error(request, "Mật khẩu nhập lại không khớp.")
+                messages.error(request, "The re-entered password does not match.")
             else:
                 obj.set_password(pwd1)
                 obj.save(update_fields=["password"])
-                messages.success(request, "Đã đổi mật khẩu cho nhân viên.")
+                messages.success(request, "Employee password changed successfully.")
                 return redirect("main:admin_employee_edit", user_id=obj.id)
             form = EmployeeForm(instance=obj)  # hiển thị lại form với lỗi
         # 2.3 Khoá / Mở
@@ -2670,16 +2665,16 @@ def admin_employee_edit(request, user_id: int):
             obj.save(update_fields=["is_active"])
             messages.success(
                 request,
-                ("Đã mở khoá tài khoản." if obj.is_active else "Đã khoá tài khoản nhân viên."),
+                ("Account unlocked." if obj.is_active else "Employee account locked."),
             )
             return redirect("main:admin_employee_edit", user_id=obj.id)
         # 2.4 Xoá
         elif action == "delete":
             if obj.id == request.user.id:
-                messages.error(request, "Bạn không thể tự xoá chính mình.")
+                messages.error(request, "You cannot delete yourself.")
             else:
                 obj.delete()
-                messages.success(request, "Đã xoá nhân viên.")
+                messages.success(request, "Employee deleted successfully.")
                 return redirect("main:admin_employee")
             form = EmployeeForm(instance=obj)
         else:
