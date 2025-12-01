@@ -4,7 +4,7 @@
 <footer class="footer-branding mt-4">
   <div class="container py-3">
 
-    <!-- ===== Hàng trên: Logo · Contact (đỏ) · Social ===== -->
+    <!-- ===== Hàng trên: Logo · Contact · Social ===== -->
     <div class="ft-top">
       <!-- Logo -->
       <a href="{% url 'main:home' %}" class="ft-logo" aria-label="Glamup Nails">
@@ -41,7 +41,7 @@
 
     <hr class="ft-sep">
 
-    <!-- ===== Hàng dưới: Quick links · Địa chỉ · ĐK Email ===== -->
+    <!-- ===== Hàng dưới: Quick links · Địa chỉ · Promotion ===== -->
     <div class="row g-4">
       <!-- Quick links -->
       <div class="col-6 col-lg-4">
@@ -66,21 +66,12 @@
         </ul>
       </div>
 
-      <!-- Đăng ký email khuyến mãi -->
+      <!-- Promotion bar (không còn form email) -->
       <div class="col-12 col-lg-4">
-        <div class="promo-card">
-          <img class="promo-img" src="{% static 'img/promo.jpg' %}" alt="Khuyến mãi"
-               onerror="this.style.display='none'">
-          <div class="promo-body">
-            <div class="promo-title">NHẬN MÃ GIẢM 10%</div>
-            <div class="promo-sub">Đăng ký email để nhận mã giảm tối đa 20k (khách mới)</div>
-            <form class="promo-form" method="post" action="#">
-              {% csrf_token %}
-              <input type="email" name="email" required placeholder="Email của bạn" class="form-control promo-input">
-              <button class="btn btn-outline-dark promo-btn" type="submit">Lấy mã</button>
-            </form>
-          </div>
-        </div>
+        <a href="{% url 'main:promotion' %}" class="promo-bar mt-2 mt-lg-0">
+          <div class="promo-badge">PROMOTION</div>
+          <div class="promo-text">September Promotion — 20% Off Gel Nail Services</div>
+        </a>
       </div>
     </div>
 
@@ -99,12 +90,12 @@
     --ft-olive:#a5aa7f;
   }
   /* ===== Thu gọn khoảng cách tổng ===== */
-  .footer-branding{ padding-top:.5rem; padding-bottom:.5rem; }
+  .footer-branding{ padding-top:.5rem; padding-bottom:.5rem; background:var(--ft-bg); }
   .ft-top{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
   .ft-sep{ border-color:#e7e4d8; margin:.5rem 0; }
 
   /* ===== Logo & Contact ===== */
-  .ft-logo img{ height:80px; width:auto; display:block; }  /* nhỏ gọn hơn */
+  .ft-logo img{ height:80px; width:auto; display:block; }
   .ft-contact-wrap{ display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
 
   .contact-card-red{
@@ -133,19 +124,51 @@
 
   /* ===== Hàng dưới ===== */
   .ft-head{ font-weight:900; letter-spacing:.3px; margin-bottom:.35rem; }
-  .ft-links li+li{ margin-top:.3rem; }
-  .ft-links a:hover{ text-decoration:underline; text-decoration-thickness:2px; }
-  .ft-contact li{ margin:.25rem 0; }
+  .ft-links li+li{
+  margin-top:.3rem;
+}
 
-  /* Promo card gọn */
-  .promo-card{ background:#fff; border:2px solid var(--ft-edge); border-radius:12px; overflow:hidden; }
-  .promo-img{ width:100%; height:auto; display:block; }
-  .promo-body{ padding:.7rem; }
-  .promo-title{ font-weight:900; color:#a5aa7f; font-size:1rem; }
-  .promo-sub{ color:#4a4a3d; margin:.15rem 0 .55rem; font-size:.93rem; }
-  .promo-form{ display:flex; gap:.5rem; }
-  .promo-input{ flex:1; }
-  .promo-btn{ white-space:nowrap; }
+.footer-branding .ft-links a {
+  color:#000 !important;
+}
+
+.footer-branding .ft-links a:hover {
+  text-decoration:underline;
+  text-decoration-thickness:2px;
+}
+
+  .ft-contact li{ margin:.25rem 0;color:#000000; }
+
+  /* ==== Promotion bar chỉ áp dụng trong footer ==== */
+.footer-branding .promo-bar{
+  display:flex;
+  align-items:center;
+  gap:.7rem;
+  background:#fff;
+  border:2px solid var(--ft-edge);
+  border-radius:999px;
+  padding:.55rem 1rem;
+  font-weight:800;
+  color:var(--ft-ink);
+  text-decoration:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
+  transition:.2s;
+}
+.footer-branding .promo-bar:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 14px rgba(0,0,0,.08);
+}
+.footer-branding .promo-badge{
+  background:#a5aa7f;
+  color:#fff;
+  border-radius:999px;
+  font-size:.78rem;
+  padding:.2rem .7rem;
+  letter-spacing:.08em;
+}
+.footer-branding .promo-text{
+  font-size:.9rem;
+}
 
   /* Thu gọn dòng bản quyền */
   .text-center.small{ margin-top:.8rem!important; padding-top:.8rem!important; }
@@ -156,7 +179,6 @@
   }
   @media (max-width: 576px){
     .contact-card-red{ min-width:100%; }
-    .promo-form{ flex-direction:column; }
-    .promo-btn{ width:100%; }
+    .promo-bar{ border-radius:12px; }
   }
 </style>
