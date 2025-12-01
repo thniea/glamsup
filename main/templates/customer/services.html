@@ -264,7 +264,22 @@
       catBtns.forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       state.cat = btn.dataset.cat;
+
+      // lưu category vào hash để lần reload vẫn nhớ
       location.hash = '#'+state.cat;
+
+      // 🔁 reset pagination về trang 1 (xoá ?page=... rồi reload)
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('page') && url.searchParams.get('page') !== '1') {
+        // cách 1: xoá hẳn param page → Django mặc định page 1
+        url.searchParams.delete('page');
+
+        // (hash #manicure vẫn nằm trên url)
+        window.location.href = url.toString();
+        return; // trang sẽ reload, không cần render ở dưới
+      }
+
+      // nếu đã ở page 1 rồi thì chỉ cần render lại
       render();
     });
   });
