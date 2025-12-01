@@ -142,13 +142,15 @@
       <span class="bo-ic"><i class="bi bi-calendar-week"></i></span>
       Staff Schedule
     </a>
-
+{% if is_receptionist %}
     <a class="bo-item {% if active == 'inbox' %}active{% endif %}"
        href="{% url 'main:staff_inbox' %}">
       <span class="bo-ic"><i class="bi bi-envelope-paper"></i></span>
       Staff Inbox
     </a>
 
+{% endif %}
+    <!-- Profile (trước đây là Overall) -->
     <a class="bo-item {% if active == 'account' or active == 'overview' %}active{% endif %}"
        href="{% url 'main:staff_account' %}">
       <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
