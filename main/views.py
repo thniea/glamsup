@@ -242,39 +242,45 @@ def signup_view(request):
     return render(request, "signup.html", {"form": form, "next": request.GET.get("next", "")})
 
 def services(request):
-    """
-    Trang danh sách dịch vụ:
-      - Lấy tất cả service đang active
-      - Tính rating trung bình và số feedback
-      - Chuẩn hóa dữ liệu để JS filter/sort ở frontend
-    """
-    qs = (
-        Service.objects
-        .filter(is_active=True)
-        .annotate(
-            rating_avg=Avg("reviews__rating"),   # KHÔNG dùng tên avg_rating để khỏi đụng property
-            review_cnt=Count("reviews"),
+        """
+        Trang danh sách dịch vụ:
+          - Lấy tất cả service đang active
+          - Tính rating trung bình và số feedback
+          - Chuẩn hóa dữ liệu để JS filter/sort ở frontend
+        """
+        qs = (
+            Service.objects
+            .filter(is_active=True)
+            .annotate(
+                rating_avg=Avg("reviews__rating"),  # KHÔNG dùng tên avg_rating để khỏi đụng property
+                review_cnt=Count("reviews"),
+            )
         )
-    )
 
-    services_data = []
-    for s in qs:
-        img_url = s.image.url if getattr(s, "image", None) else PLACEHOLDER
-        services_data.append({
-            "id": s.id,
-            "name": s.service_name,
-            "slug": s.slug,
-            "price": s.price,
-            "thumbnail_url": img_url,
-            "category": (s.category or "").lower(),
-            # value này template đang dùng: s.avg_rating
-            "avg_rating": float(s.rating_avg or 0),
-            "total_reviews": s.review_cnt,
+        services_data = []
+        for s in qs:
+            img_url = s.image.url if getattr(s, "image", None) else PLACEHOLDER
+            services_data.append({
+                "id": s.id,
+                "name": s.service_name,
+                "slug": s.slug,
+                "price": s.price,
+                "thumbnail_url": img_url,
+                "category": (s.category or "").lower(),
+                # value này template đang dùng: s.avg_rating
+                "avg_rating": float(s.rating_avg or 0),
+                "total_reviews": s.review_cnt,
+            })
+
+        # -------- PHÂN TRANG: 9 dịch vụ / 1 trang --------
+        paginator = Paginator(services_data, 9)  # 9 services mỗi trang
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, "customer/services.html", {
+            "services": page_obj.object_list,  # vẫn loop như cũ: for s in services
+            "page_obj": page_obj,  # dùng cho thanh phân trang
         })
-
-    return render(request, "customer/services.html", {
-        "services": services_data,
-    })
 
 
 from django.db.models import Avg  # thêm import này

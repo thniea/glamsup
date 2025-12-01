@@ -133,6 +133,51 @@
           <div class="empty">No services available yet.</div>
         {% endfor %}
       </div>
+              {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+
+          {# Prev #}
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">« Prev</span>
+            </li>
+          {% endif %}
+
+          {# Các số trang #}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <li class="page-item active">
+                <span class="page-link"
+                      style="background-color:var(--brand);border-color:var(--brand);">
+                  {{ num }}
+                </span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {# Next #}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next »</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">Next »</span>
+            </li>
+          {% endif %}
+
+        </ul>
+      </nav>
+      {% endif %}
     </section>
   </div>
 </div>
@@ -156,13 +201,14 @@
   const state = { cat:'all', sort:'', q:'' };   // mặc định ALL
 
   function setHero(cat){
+    if (!heroImg || !heroTitle || !heroDesc) return; // không có hero thì thôi
     heroImg.src = HERO_COMMON;
     const titleMap = {all:'All', manicure:'Manicure', pedicure:'Pedicure', more:'More'};
     const descMap  = {
-      all: "Browse all our latest services and collections.",
-      manicure: "Discover our latest spring collection for perfect hands.",
-      pedicure: "Pamper your feet with our relaxing pedicure services.",
-      more: "Add-on care to complete your beauty routine."
+        all: "Browse all our latest services and collections.",
+        manicure: "Discover our latest spring collection for perfect hands.",
+        pedicure: "Pamper your feet with our relaxing pedicure services.",
+        more: "Add-on care to complete your beauty routine."
     };
     heroTitle.textContent = titleMap[cat] || 'All';
     heroDesc.textContent  = descMap[cat]  || descMap.all;
