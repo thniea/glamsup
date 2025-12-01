@@ -38,11 +38,11 @@
           <i class="bi bi-calendar-week"></i>
           <span>{{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}</span>
         </div>
-        <a class="btn btn-outline-secondary" href="?start={{ prev_start }}" title="Previous week"><i class="bi bi-chevron-left"></i></a>
-        <a class="btn btn-outline-secondary" href="?start={{ next_start }}" title="Next week"><i class="bi bi-chevron-right"></i></a>
+        <a class="btn btn-outline-brand" href="?start={{ prev_start }}" title="Previous week"><i class="bi bi-chevron-left"></i></a>
+        <a class="btn btn-outline-brand" href="?start={{ next_start }}" title="Next week"><i class="bi bi-chevron-right"></i></a>
       </div>
 
-      <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#addShiftModal">
+      <button class="btn btn-outline-brand" data-bs-toggle="modal" data-bs-target="#addShiftModal">
         <i class="bi bi-pencil-square me-2"></i>Add Work Schedule
       </button>
     </div>
@@ -118,8 +118,8 @@
         <div class="small text-muted">Yêu cầu sẽ ở trạng thái <b>Waiting</b> cho đến khi Admin duyệt và gán cơ sở làm việc.</div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-dark">Send request</button>
+        <button type="button" class="btn btn-outline-brand" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-brand">Send request</button>
       </div>
     </form>
   </div>
