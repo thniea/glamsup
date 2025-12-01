@@ -121,6 +121,12 @@ footer{
 }
 .btn-outline-danger {
     border-radius: 999px !important;
+    box-shadow: 0 3px 10px rgba(114,145,70,.25);
+    transition: .25s ease;
+}
+.btn-outline-danger:hover {
+    border-radius: 999px !important;
+    transform: translateY(-2px);
 }
 
 .btn-sm{ padding: .35rem .8rem; font-size: .95rem; }
