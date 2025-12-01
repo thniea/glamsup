@@ -18,10 +18,46 @@
     padding:16px;
     position:sticky; top:1rem;
   }
+
+  /* avatar cũ (giữ lại cho an toàn, nhưng giờ dùng wrapper mới) */
   .bo-profile .bo-avatar{
     width:72px;height:72px;border-radius:50%;
     object-fit:cover;border:3px solid #fff;
   }
+
+  /* === Avatar upload giống bên customer === */
+  .bo-avatar-wrap{
+    position:relative;
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    overflow:hidden;
+    border:3px solid #fff;
+    box-shadow:0 0 0 2px #cfd3a9;
+    cursor:pointer;
+    background:#fdfcf6;
+  }
+  .bo-avatar-edit{
+    position:absolute;
+    right:0;
+    bottom:0;
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    background:#a5aa7f;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    box-shadow:0 2px 4px rgba(0,0,0,.25);
+  }
+  .bo-avatar-edit i{ line-height:1; }
+  .bo-avatar-input{ display:none; }
+
   .bo-profile .bo-role{ color:#6c7551; font-weight:700; }
 
   .bo-menu{ margin-top:12px }
@@ -49,8 +85,36 @@
 <div class="bo-sidebar">
   <!-- Header -->
   <div class="bo-profile d-flex align-items-center gap-3 mb-3">
-    <img src="{{ staff_avatar_url|default:'/static/img/ảnh_người_1.jpg' }}"
-         class="bo-avatar" alt="avatar">
+
+    {# FORM UPLOAD AVATAR CHO ADMIN – click vào avatar để chọn ảnh #}
+    <form id="adminAvatarForm"
+          method="post"
+          action="{% url 'main:staff_account' %}"   {# nơi xử lý upload avatar cho staff/admin #}
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload_avatar">
+
+      <label for="id_admin_avatar_input"
+             class="bo-avatar-wrap"
+             title="Change avatar">
+        {% if staff_avatar_url %}
+          <img src="{{ staff_avatar_url }}" class="bo-avatar" alt="avatar">
+        {% else %}
+          <img src="{% static 'img/ảnh_người_1.jpg' %}" class="bo-avatar" alt="avatar">
+        {% endif %}
+        <span class="bo-avatar-edit">
+          <i class="bi bi-camera-fill"></i>
+        </span>
+      </label>
+
+      <input id="id_admin_avatar_input"
+             class="bo-avatar-input"
+             type="file"
+             name="avatar"
+             accept="image/*"
+             onchange="document.getElementById('adminAvatarForm').submit();">
+    </form>
+
     <div>
       <div class="bo-role small">Admin</div>
       <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
