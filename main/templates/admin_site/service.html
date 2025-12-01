@@ -13,6 +13,7 @@
   body{ background:var(--bg); font-family:'Nunito',sans-serif; }
   .title{ font-weight:900; letter-spacing:.5px; }
   .thumb{ width:44px; height:44px; border-radius:10px; object-fit:cover; border:2px solid var(--brand); }
+
   .status-chip{
     display:inline-block; background:#eef3db; border:1px solid var(--brand);
     border-radius:999px; padding:.25rem .6rem; font-weight:700; font-size:.9rem;
@@ -26,6 +27,43 @@
   .cat-mani{ background:var(--cat-mani); border-color:#81c784; }
   .cat-pedi{ background:var(--cat-pedi); border-color:#f48fb1; }
   .cat-more{ background:var(--cat-more); border-color:#a1887f; }
+
+  /* Nút delete */
+  .btn-del {
+    border-radius:999px;
+    border:2px solid #e29b9b;
+    background:#fff5f5;
+    color:#b64747;
+    font-weight:700;
+    padding:.2rem .8rem;
+    font-size:.8rem;
+  }
+  .btn-del:hover{
+    background:#ffe1e1;
+  }
+
+  /* Nhóm 2 nút Update: Edit + Delete thành 2 “cột” cố định */
+  .update-actions{
+    display: grid;
+    grid-template-columns: 80px 80px;  /* mỗi nút 80px */
+    justify-content: center;           /* căn cụm nút vào giữa cột Update */
+    column-gap: 8px;                   /* khoảng cách giữa Edit & Delete */
+  }
+
+  .update-actions .btn{
+    width: 100%;
+    text-align: center;
+  }
+  /* FIX lệch nút Edit & Delete (do line-height / padding khác nhau) */
+  .update-actions .btn {
+    height: 32px;            /* giữ chiều cao đồng nhất */
+    display: flex;
+    align-items: center;     /* căn nút Edit vào giữa */
+    justify-content: center; /* căn text giữa */
+    padding-top: 0;          /* xoá padding thừa */
+    padding-bottom: 0;
+  }
+
 </style>
 {% endblock %}
 
@@ -72,7 +110,7 @@
               <th style="width:120px;">Duration</th>
               <th style="width:140px;">Category</th>
               <th style="width:160px;">Order status</th>
-              <th style="width:120px;">Update</th>
+              <th style="width:180px;" class="text-center">Update</th>
             </tr>
           </thead>
           <tbody>
@@ -104,8 +142,24 @@
                     <span class="status-chip status-out">Out of Stock</span>
                   {% endif %}
                 </td>
-                <td>
-                  <a class="btn btn-sm btn-outline-brand" href="{% url 'main:admin_service_edit' s.id %}">Edit</a>
+                <td class="text-center">
+                  <div class="update-actions">
+                    <!-- Edit -->
+                    <a class="btn btn-sm btn-outline-brand"
+                       href="{% url 'main:admin_service_edit' s.id %}">
+                      Edit
+                    </a>
+
+                    <!-- Delete -->
+                    <form action="{% url 'main:admin_service_delete' s.id %}"
+                          method="post"
+                          onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-del">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
               {% endfor %}
