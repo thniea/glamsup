@@ -913,16 +913,16 @@ def cancel_appointment(request, pk: int):
     now = timezone.now()
 
     if (start_dt - now).total_seconds() < 3 * 3600:
-        messages.error(request, "Bạn chỉ có thể hủy lịch trước tối thiểu 3 giờ.")
+        messages.error(request, "You can only cancel an appointment at least 3 hours in advance.")
         return redirect("main:my_appointments")
 
     if appt.status not in [Appointment.Status.PENDING, Appointment.Status.CONFIRMED]:
-        messages.error(request, "Lịch ở trạng thái hiện tại không thể hủy.")
+        messages.error(request, "This appointment cannot be canceled in its current status.")
         return redirect("main:my_appointments")
 
     appt.status = Appointment.Status.CANCELED
     appt.save(update_fields=["status"])
-    messages.success(request, "Đã hủy lịch hẹn.")
+    messages.success(request, "The appointment has been canceled successfully.")
     return redirect("main:my_appointments")
 
 # === FEEDBACK / REVIEWS ===
@@ -944,7 +944,7 @@ def customer_feedback(request, booking_id: int):
 
     # Chỉ cho feedback khi đã hoàn tất
     if appt.status != Appointment.Status.DONE:
-        messages.error(request, "Chỉ có thể đánh giá khi lịch hẹn đã hoàn tất.")
+        messages.error(request, "You can only leave a review after the appointment is completed.")
         return redirect("main:my_appointments")
 
     first_line = appt.service_lines.select_related("service").first()
@@ -983,7 +983,7 @@ def customer_feedback(request, booking_id: int):
             review.status = Review.Status.PUBLISHED
             review.save()
 
-            messages.success(request, "Cảm ơn bạn đã gửi đánh giá 💚")
+            messages.success(request, "Thank you for your feedback 💚")
             return redirect("main:service_detail", slug=main_service.slug) if main_service else redirect("main:my_appointments")
     else:
         init = {}
@@ -1043,7 +1043,7 @@ def admin_feedback_reply(request, pk: int):
         # Nếu bạn muốn kiểm duyệt sau khi reply thì:
         # review.status = Review.Status.PUBLISHED
         review.save(update_fields=["admin_reply", "admin_replied_at"])
-        messages.success(request, "Đã lưu phản hồi.")
+        messages.success(request, "Your response has been saved.")
         return redirect("main:admin_feedback")
 
     return render(request, "admin_site/feedback_reply.html", {"review": review})
@@ -1094,12 +1094,12 @@ def customer_account(request):
 
             # Check trùng email (loại trừ chính mình)
             if email and User.objects.exclude(pk=u.pk).filter(email__iexact=email).exists():
-                messages.error(request, "Email đã tồn tại, vui lòng dùng email khác.")
+                messages.error(request, "This email already exists. Please use a different one.")
             else:
                 u.full_name = full_name
                 u.email = email
                 u.save(update_fields=["full_name", "email"])
-                messages.success(request, "Cập nhật tài khoản thành công.")
+                messages.success(request, "Your account has been updated successfully.")
                 # ----- Đổi mật khẩu (nếu user nhập) -----
             old_pwd = (request.POST.get("old_password") or "").strip()
             new1 = (request.POST.get("new_password1") or "").strip()
@@ -1108,11 +1108,11 @@ def customer_account(request):
             if old_pwd or new1 or new2:
                 # bắt buộc đủ 3 ô
                 if not (old_pwd and new1 and new2):
-                    messages.error(request, "Vui lòng điền đủ 3 trường đổi mật khẩu.")
+                    messages.error(request, "Please fill in all three password fields.")
                 elif not u.check_password(old_pwd):
-                    messages.error(request, "Mật khẩu hiện tại không đúng.")
+                    messages.error(request, "The current password you entered is incorrect.")
                 elif new1 != new2:
-                    messages.error(request, "Mật khẩu mới nhập lại không khớp.")
+                    messages.error(request, "The new passwords do not match.")
                 else:
                     try:
                         password_validation.validate_password(new1, user=u)
@@ -1123,7 +1123,7 @@ def customer_account(request):
                         u.set_password(new1)
                         u.save(update_fields=["password"])
                         update_session_auth_hash(request, u)  # giữ đăng nhập
-                        messages.success(request, "Đổi mật khẩu thành công.")
+                        messages.success(request, "Password changed successfully.")
 
             return redirect("main:customer_account")
         # 2) Lưu Personal (phone, address, dob)
@@ -1139,7 +1139,7 @@ def customer_account(request):
                 try:
                     u.date_of_birth = datetime.strptime(dob, "%Y-%m-%d").date()
                 except ValueError:
-                    messages.error(request, "Ngày sinh không hợp lệ. Định dạng YYYY-MM-DD.")
+                    messages.error(request, "Invalid date of birth. Format must be YYYY-MM-DD.")
                     # đi tiếp để render
                 else:
                     update_fields.append("date_of_birth")
@@ -1148,27 +1148,27 @@ def customer_account(request):
                 update_fields.append("date_of_birth")
 
             u.save(update_fields=update_fields)
-            messages.success(request, "Cập nhật thông tin cá nhân thành công.")
+            messages.success(request, "Your personal information has been updated successfully.")
         if action == "upload_avatar":
             file = request.FILES.get("avatar")
             if not file:
-                messages.error(request, "Vui lòng chọn ảnh.")
+                messages.error(request, "Please select an image.")
                 return redirect('main:customer_account')
 
             # validate cơ bản
             allowed = {"image/jpeg", "image/png", "image/webp"}
             if getattr(file, "content_type", "").lower() not in allowed:
-                messages.error(request, "Chỉ chấp nhận JPG, PNG hoặc WEBP.")
+                messages.error(request, "Only JPG, PNG, or WEBP formats are accepted.")
                 return redirect('main:customer_account')
 
             if file.size > 2 * 1024 * 1024:  # 2MB
-                messages.error(request, "Ảnh quá lớn (tối đa 2MB).")
+                messages.error(request, "The image is too large (maximum 2MB).")
                 return redirect('main:customer_account')
 
             # lưu
             u.avatar = file
             u.save(update_fields=["avatar"])
-            messages.success(request, "Đã cập nhật ảnh đại diện.")
+            messages.success(request, "Your profile picture has been updated.")
             return redirect('main:customer_account')
         # Tránh resubmit form khi refresh
         return redirect("main:customer_account")
@@ -1219,7 +1219,7 @@ def contact_view(request):
         form = ContactForm(request.POST)
         if form.is_valid():
             form.save()  # lưu vào ContactMessage.status = 'new' → lễ tân xem & xử lý
-            messages.success(request, "Đã gửi thắc mắc! Lễ tân sẽ liên hệ bạn sớm nhất.")
+            messages.success(request, "Your inquiry has been sent! Our receptionist will contact you as soon as possible.")
             return redirect("main:contact")
     else:
         form = ContactForm()
@@ -1336,7 +1336,7 @@ def check_in(request, pk: int):
     appt = get_object_or_404(Appointment, pk=pk)
     appt.status = Appointment.Status.ARRIVED
     appt.save(update_fields=["status"])
-    messages.success(request, f"Đã check-in cho lịch hẹn { _make_booking_code(appt.id) }.")
+    messages.success(request, f"Successfully checked in for appointment { _make_booking_code(appt.id) }.")
     # quay lại trang trước (nếu có)
     return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
 
@@ -1355,7 +1355,7 @@ def check_out(request, pk: int):
 
     # Tránh check-out lại những lịch đã xong/hủy
     if appt.status in [Appointment.Status.DONE, Appointment.Status.CANCELED]:
-        messages.info(request, "Lịch hẹn này đã được xử lý xong.")
+        messages.info(request, "This appointment has already been completed.")
         return redirect(request.META.get("HTTP_REFERER") or "main:receptionist_dashboard")
 
     appt.status = Appointment.Status.DONE
@@ -1369,12 +1369,12 @@ def check_out(request, pk: int):
     if mail_sent:
         messages.success(
             request,
-            f"Đã check-out, hoàn tất lịch hẹn {_make_booking_code(appt.id)} và gửi email mời đánh giá cho khách."
+            f"Checked out, completed appointment {_make_booking_code(appt.id)} and sent a review invitation email to the customer."
         )
     else:
         messages.success(
             request,
-            f"Đã check-out và hoàn tất lịch hẹn {_make_booking_code(appt.id)}."
+            f"Checked out and completed appointment {_make_booking_code(appt.id)}."
         )
 
 
@@ -1393,12 +1393,12 @@ def send_review_invitation(request, appt: Appointment) -> bool:
 
     # 1) Không có email → bỏ qua
     if not getattr(customer, "email", None):
-        print(f"[REVIEW MAIL] Bỏ qua: customer {customer} không có email.")
+        print(f"[REVIEW MAIL] Bỏ qua: customer {customer} has no email.")
         return False
 
     # 2) Lịch đã có review → không gửi nữa
     if appt.reviews.exists():
-        print(f"[REVIEW MAIL] Bỏ qua: appointment {appt.id} đã có review.")
+        print(f"[REVIEW MAIL] Bỏ qua: appointment {appt.id} already has a review.")
         return False
 
     # 3) Tạo link tới trang feedback
@@ -1406,29 +1406,29 @@ def send_review_invitation(request, appt: Appointment) -> bool:
         reverse("main:my_appointments")
     )
 
-    subject = "Mời bạn đánh giá trải nghiệm tại GlamUp Nails 💅"
+    subject = "We invite you to review your experience at GlamUp Nails 💅"
 
     text_message = (
-        f"Chào {getattr(customer, 'full_name', '') or customer.username},\n\n"
-        "Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ tại GlamUp Nails.\n"
-        "Bạn có thể dành ít thời gian để đánh giá trải nghiệm của mình tại đây:\n"
+        f"Dear {getattr(customer, 'full_name', '') or customer.username},\n\n"
+        "Thank you for trusting and using the services at GlamUp Nails.\n"
+        "Please take a few moments to review your experience here:\n"
         f"{review_url}\n\n"
-        "Ý kiến của bạn giúp GlamUp Nails cải thiện dịch vụ tốt hơn mỗi ngày.\n"
-        "Chúc bạn một ngày thật xinh đẹp!\n"
+        "Your feedback helps GlamUp Nails improve our services every day.\n"
+        "Wishing you a beautiful day!\n"
     )
 
     html_message = f"""
-    <p>Chào <strong>{getattr(customer, 'full_name', '') or customer.username}</strong>,</p>
-    <p>Cảm ơn bạn đã tin tưởng và chọn <strong>GlamUp Nails</strong> để chăm sóc và tân trang cho bộ móng tay xinh yêu của mình 💅✨.</p>
-    <p>Nếu có thể, bạn hãy dành ít phút để đánh giá trải nghiệm dịch vụ vừa rồi giúp GlamUp cải thiện tốt hơn mỗi ngày nhé ❤️.</p>
+    <p>Dear <strong>{getattr(customer, 'full_name', '') or customer.username}</strong>,</p>
+    <p>Thank you for choosing <strong>GlamUp Nails</strong> to trust, care for, and refresh your lovely nails 💅✨.</p>
+    <p>If you have a moment, please take a few minutes to review your recent service experience. Your feedback helps GlamUp improve every day ❤️.</p>
     <p style="margin:24px 0;">
       <a href="{review_url}"
          style="background:#a5aa7f;color:#ffffff;padding:10px 22px;border-radius:999px;
                 text-decoration:none;font-weight:bold;display:inline-block;">
-        Đánh giá ngay
+        Review Now
       </a>
     </p>
-    <p>Chúc bạn một ngày thật tốt lành và luôn rạng rỡ! 🌸🌼</p>
+    <p>Wishing you a wonderful and radiant day! 🌸🌼</p>
     """
 
     try:
@@ -1440,16 +1440,12 @@ def send_review_invitation(request, appt: Appointment) -> bool:
             fail_silently=False,   # 👈 TẠM THỜI cho False để nếu lỗi SMTP sẽ hiện ở console
             html_message=html_message,
         )
-        print(f"[REVIEW MAIL] ĐÃ gửi email mời đánh giá tới {customer.email} cho appt {appt.id}.")
+        print(f"[REVIEW MAIL] Successfully sent review invitation email to {customer.email} cho appt {appt.id}.")
         return True
     except Exception as e:
         # Xem lỗi cụ thể ở console
-        print(f"[REVIEW MAIL] LỖI khi gửi mail cho appt {appt.id}: {e}")
+        print(f"[REVIEW MAIL] ERROR sending mail for appt {appt.id}: {e}")
         return False
-
-
-
-
 
 
 @never_cache
@@ -1477,11 +1473,11 @@ def staff_account(request):
 
             # check trùng email (không tính chính mình)
             if email and User.objects.exclude(pk=u.pk).filter(email__iexact=email).exists():
-                messages.error(request, "Email đã tồn tại.")
+                messages.error(request, "Email already exists")
             else:
                 u.email = email
                 u.save(update_fields=["full_name", "email"])
-                messages.success(request, "Cập nhật tài khoản thành công.")
+                messages.success(request, "Account updated successfully.")
             return redirect('main:staff_account')
 
         # 2) Lưu Personal information
@@ -1504,14 +1500,14 @@ def staff_account(request):
                     u.date_of_birth = _date.fromisoformat(dob_raw) if dob_raw else None
                     update_fields.append("date_of_birth")
                 except ValueError:
-                    messages.error(request, "Ngày sinh không hợp lệ (định dạng YYYY-MM-DD).")
+                    messages.error(request, "Invalid date of birth (format YYYY-MM-DD).")
                     return redirect('main:staff_account')
 
             if update_fields:
                 u.save(update_fields=update_fields)
-                messages.success(request, "Cập nhật thông tin cá nhân thành công.")
+                messages.success(request, "Personal information updated successfully.")
             else:
-                messages.info(request, "Không có trường nào để cập nhật.")
+                messages.info(request, "No fields to update.")
             return redirect('main:staff_account')
         #Đổi mật khẩu
         if action == "change_password":
@@ -1522,7 +1518,7 @@ def staff_account(request):
                 u.save(update_fields=["password"])
                 # giữ người dùng đăng nhập sau khi đổi mật khẩu
                 update_session_auth_hash(request, u)
-                messages.success(request, "Đã đổi mật khẩu thành công.")
+                messages.success(request, "Password changed successfully.")
             else:
                 # gom lỗi để hiển thị bằng messages
                 for errs in form_pwd.errors.values():
@@ -1532,25 +1528,25 @@ def staff_account(request):
         if action == "upload_avatar":
             file = request.FILES.get("avatar")
             if not file:
-                messages.error(request, "Vui lòng chọn ảnh.")
+                messages.error(request, "Please select an image.")
                 return redirect('main:staff_account')
 
             # validate cơ bản
             allowed = {"image/jpeg", "image/png", "image/webp"}
             if getattr(file, "content_type", "").lower() not in allowed:
-                messages.error(request, "Chỉ chấp nhận JPG, PNG hoặc WEBP.")
+                messages.error(request, "Only JPG, PNG, or WEBP are accepted.")
                 return redirect('main:staff_account')
 
             if file.size > 2 * 1024 * 1024:  # 2MB
-                messages.error(request, "Ảnh quá lớn (tối đa 2MB).")
+                messages.error(request, "Image is too large (maximum 2MB).")
                 return redirect('main:staff_account')
 
             if hasattr(u, "avatar"):
                 u.avatar = file
                 u.save(update_fields=["avatar"])
-                messages.success(request, "Đã cập nhật ảnh đại diện.")
+                messages.success(request, "Avatar updated successfully.")
             else:
-                messages.error(request, "Tài khoản chưa hỗ trợ trường avatar.")
+                messages.error(request, "Account does not support the avatar field.")
             return redirect('main:staff_account')
 
     # Build dữ liệu hiển thị (an toàn)
@@ -1743,7 +1739,7 @@ def staff_schedule(request):
         form = StaffSelfScheduleForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, "Đã gửi yêu cầu ca làm (chờ admin duyệt).")
+            messages.success(request, "Shift request sent (pending admin approval)")
             return redirect(f"{request.path}?start={week_start.isoformat()}")
         else:
             messages.error(request, "; ".join([" ".join(v) for v in form.errors.values()]))
@@ -1896,7 +1892,7 @@ def staff_appointments(request):
         elif action == "mark_uncompleted":
             appt.status = Appointment.Status.ONGOING
             appt.save(update_fields=["status"])
-            messages.info(request, "Đã chuyển lại trạng thái đang làm.")
+            messages.info(request, "Switched back to the 'in-progress' status")
         return redirect("main:staff_appointments")
 
     return render(request, "staff/appointments.html", {
