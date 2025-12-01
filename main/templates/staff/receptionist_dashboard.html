@@ -42,7 +42,7 @@
   }
 
   /* Nút nền olive, chữ trắng (giống Save) */
-  .btn-brand-fill{
+  .btn-brand-fill{  .btn-brand-fill{
     background:var(--brand);
     border:2px solid var(--brand);
     color:#fff;
@@ -98,21 +98,17 @@
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card p-3 bg-light">
-          <p class="text-muted mb-1 small">Add New Customer</p>
-          <a href="#" class="btn btn-sm btn-pill btn-brand-outline w-100">
+          <div class="card p-3 bg-light">
+            <p class="text-muted mb-1 small">Add New Customer</p>
+            <button type="button"
+                    class="btn btn-sm btn-pill btn-brand-outline w-100"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createCustomerModal">
               <i class="bi bi-person-plus"></i> Create Profile
-          </a>
-        </div>
+            </button>
+          </div>
       </div>
-      <div class="col-md-4">
-        <div class="card p-3 bg-light">
-          <p class="text-muted mb-1 small">Create Walk-in Appointment</p>
-          <a href="{% url 'main:book' %}" class="btn btn-sm btn-pill btn-brand-outline w-100">
-              <i class="bi bi-calendar-plus"></i> Quick Booking
-          </a>
-        </div>
-      </div>
+
     </div>
 
     <div class="card">
@@ -171,6 +167,85 @@
             <p class="mb-0">No appointments to manage today.</p>
           </div>
         {% endif %}
+      <!-- Modal: Create Customer Profile -->
+        <div class="modal fade" id="createCustomerModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <form method="post" action="{% url 'main:receptionist_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_customer">
+
+                <div class="modal-header">
+                  <h5 class="modal-title fw-bold">Create customer profile</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"
+                          aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  {% if signup_form.non_field_errors %}
+                    <div class="alert alert-danger small">
+                      {{ signup_form.non_field_errors }}
+                    </div>
+                  {% endif %}
+
+                  <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Username</label>
+                    {{ signup_form.username }}
+                    <div class="text-danger small">{{ signup_form.username.errors }}</div>
+                  </div>
+
+                  <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Full name</label>
+                    {{ signup_form.full_name }}
+                    <div class="text-danger small">{{ signup_form.full_name.errors }}</div>
+                  </div>
+
+                  <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Email</label>
+                    {{ signup_form.email }}
+                    <div class="text-danger small">{{ signup_form.email.errors }}</div>
+                  </div>
+
+                  <div class="mb-2">
+                    <label class="form-label fw-bold small mb-1">Password</label>
+                    {{ signup_form.password1 }}
+                    <div class="text-danger small">{{ signup_form.password1.errors }}</div>
+                  </div>
+
+                  <div class="mb-1">
+                    <label class="form-label fw-bold small mb-1">Confirm password</label>
+                    {{ signup_form.password2 }}
+                    <div class="text-danger small">{{ signup_form.password2.errors }}</div>
+                  </div>
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                  <button type="button" class="btn btn-sm btn-pill btn-brand-outline"
+                          data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn btn-sm btn-pill btn-brand-fill">
+                    Create account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {% if signup_form.errors %}
+        <script>
+          // Nếu form lỗi, tự bật lại modal khi reload
+          document.addEventListener("DOMContentLoaded", function () {
+            var m = document.getElementById("createCustomerModal");
+            if (m && window.bootstrap) {
+              var modal = new bootstrap.Modal(m);
+              modal.show();
+            }
+          });
+        </script>
+        {% endif %}
+
       </div>
     </div>
   </div>

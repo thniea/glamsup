@@ -586,19 +586,50 @@ def _parse_booking_code(code: str) -> int | None:
 def _code_to_pk(code: str) -> int:
     return int(code.replace("BK", "").lstrip("0") or "0")
 
+from django.utils import timezone
+from decimal import Decimal
+from types import SimpleNamespace
+from datetime import datetime, date as _date
 
-@login_required
+# ...
+
 def payment(request, code: str):
     appt_pk = _code_to_pk(code)
-    appt = get_object_or_404(Appointment, pk=appt_pk, customer=request.user)
-    pay  = get_object_or_404(Payment, appointment=appt)
+    appt = get_object_or_404(Appointment, pk=appt_pk)
+
+    # Nếu là customer thì chỉ cho xem lịch của chính mình
+    if is_customer(request.user) and appt.customer and appt.customer != request.user:
+        raise Http404("Appointment not found")
+
+    pay = get_object_or_404(Payment, appointment=appt)
     lines = (AppointmentService.objects
              .filter(appointment=appt)
              .select_related("service"))
 
     subtotal = sum((l.unit_price or 0) * (l.quantity or 1) for l in lines)
     u = request.user
+    # ====== LOYALTY CHỈ ÁP DỤNG KHI CÓ customer ======
+    total_vnd = int(appt.total_price or 0)
+    customer = appt.customer
 
+    if customer:
+        lp, _ = LoyaltyPoints.objects.get_or_create(customer=customer)
+        available_points = lp.current_points
+
+        discount_vnd = 0
+        points_used = 0
+
+        if available_points >= 100:
+            usable_points = (available_points // 10) * 10
+            if usable_points >= 100:
+                points_used = usable_points
+                discount_vnd = (points_used // 10) * 1000
+    else:
+        available_points = 0
+        discount_vnd = 0
+        points_used = 0
+
+    final_amount = max(0, total_vnd - discount_vnd)
     # ====== CHỈNH 1: TÍNH GIẢM GIÁ TỪ ĐIỂM LOYALTY ======
     total_vnd = int(appt.total_price or 0)
 
@@ -648,16 +679,19 @@ from django.views.decorators.http import require_POST
 @login_required
 def payment_complete(request, code: str):
     appt_pk = _code_to_pk(code)
-    appt = get_object_or_404(Appointment, pk=appt_pk, customer=request.user)
-    pay  = get_object_or_404(Payment, appointment=appt)
+    appt = get_object_or_404(Appointment, pk=appt_pk)
+    pay = get_object_or_404(Payment, appointment=appt)
+
+    if is_customer(request.user) and appt.customer and appt.customer != request.user:
+        raise Http404("Appointment not found")
+
+    pay = get_object_or_404(Payment, appointment=appt)
 
     if pay.method == Payment.Method.ONLINE:
-        # Tránh xử lý lại nếu đã thanh toán rồi
         if pay.status == Payment.Status.PAID:
             messages.info(request, "This order was paid previously")
             return redirect("main:order_result", code=code)
 
-        # Giả lập thanh toán thành công
         pay.status = Payment.Status.PAID
         pay.save(update_fields=["status"])
         appt.status = Appointment.Status.CONFIRMED
@@ -708,8 +742,12 @@ def payment_complete(request, code: str):
 @login_required
 def order_result(request, code: str):
     appt_pk = _code_to_pk(code)
-    appt = get_object_or_404(Appointment, pk=appt_pk, customer=request.user)
-    pay  = get_object_or_404(Payment, appointment=appt)
+    appt = get_object_or_404(Appointment, pk=appt_pk)
+
+    if is_customer(request.user) and appt.customer and appt.customer != request.user:
+        raise Http404("Appointment not found")
+
+    pay = get_object_or_404(Payment, appointment=appt)
     lines = (
         AppointmentService.objects
         .filter(appointment=appt)
@@ -735,7 +773,6 @@ def order_result(request, code: str):
     points_used = abs(tx.points) if tx else 0
     discount_vnd = (points_used // 10) * 1000 if points_used else 0
     final_amount_vnd = max(0, total_vnd - discount_vnd)
-    # ====== HẾT PHẦN MỚI ======
 
     ctx = {
         "appt": appt,                     # booking_sucess.html đang dùng {{ appt.* }}
@@ -1261,7 +1298,7 @@ def _map_appt_for_rx(appt):
         "status": appt.status,
     }
 
-
+from .forms import SignupForm
 @never_cache
 @login_required
 @user_passes_test(is_receptionist)
@@ -1269,7 +1306,24 @@ def receptionist_dashboard(request):
     """
      Lễ tân: hiển thị lịch hẹn theo ngày (mặc định: hôm nay).
     Có thể chọn ngày khác bằng ?date=YYYY-MM-DD
+    + Modal tạo khách hàng mới (signup_form)
     """
+    signup_form = SignupForm()
+    # --- Xử lý tạo customer khi POST từ modal ---
+    if request.method == "POST" and request.POST.get("action") == "create_customer":
+        signup_form = SignupForm(request.POST)
+        if signup_form.is_valid():
+            user = signup_form.save(commit=False)
+            from .models import User
+            user.role = getattr(User.Role, "CUSTOMER", "CUSTOMER")
+            user.is_staff = False
+            user.save()
+
+            messages.success(
+                request,
+                f"Created customer account for {user.username}."
+            )
+            return redirect("main:receptionist_dashboard")
     try:
         date_str = (request.GET.get("date") or "").strip()
         selected_date = _date.fromisoformat(date_str) if date_str else timezone.localdate()
@@ -1292,6 +1346,7 @@ def receptionist_dashboard(request):
         "selected_date": selected_date,  # ngày đang xem
         "is_receptionist": True,
         "is_technician": False,
+        "signup_form": signup_form,
     })
 
 
