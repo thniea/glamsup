@@ -22,7 +22,7 @@
 
   <!-- ===== Main ===== -->
   <div class="col-lg-9 col-md-8">
-    <h1 class="h4 mb-3 text-center">EMPLOYEE MANAGEMENT</h1>
+    <h1 class="h4 mb-3 fw-bold text-center">EMPLOYEE MANAGEMENT</h1>
 
     {% include "includes/_messages.html" %}
 
@@ -60,7 +60,7 @@
               <th style="width:120px;">Role</th>
               <th>Email</th>
               <th style="width:150px;">Phone</th>
-              <th style="width:140px;" class="text-center">Work Schedule</th>
+              {# ĐÃ BỎ CỘT WORK SCHEDULE #}
               <th style="width:120px;" class="text-center">Actions</th>
             </tr>
           </thead>
@@ -68,15 +68,15 @@
             {% for u in staff %}
             <tr>
               <td>
-  {% if u.avatar %}
-    <img src="{{ u.avatar.url }}"
-         alt="{{ u.full_name|default:u.get_full_name|default:u.username }}"
-         class="rounded-circle border"
-         style="width:36px;height:36px;object-fit:cover;">
-  {% else %}
-    <div class="rounded-circle bg-light border" style="width:36px;height:36px;"></div>
-  {% endif %}
-</td>
+                {% if u.avatar %}
+                  <img src="{{ u.avatar.url }}"
+                       alt="{{ u.full_name|default:u.get_full_name|default:u.username }}"
+                       class="rounded-circle border"
+                       style="width:36px;height:36px;object-fit:cover;">
+                {% else %}
+                  <div class="rounded-circle bg-light border" style="width:36px;height:36px;"></div>
+                {% endif %}
+              </td>
               <td class="fw-semibold">
                 {{ u.full_name|default:u.get_full_name|default:u.username }}
                 {% if not u.is_active %}
@@ -92,17 +92,17 @@
               </td>
               <td>{{ u.email|default:"—" }}</td>
               <td>{{ u.phone_number|default:"—" }}</td>
-              <td class="text-center">
-                <a class="btn btn-sm btn-outline-brand"
-                   href="{% url 'main:admin_schedule' %}?staff={{ u.id }}">View</a>
-              </td>
+              {# ĐÃ BỎ Ô VIEW SCHEDULE #}
               <td class="text-center">
                 <a class="btn btn-sm btn-outline-brand"
                    href="{% url 'main:admin_employee_edit' u.id %}">Edit</a>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="text-center text-muted py-4">No employees.</td></tr>
+            <tr>
+              {# tổng số cột hiện tại: 6 → colspan=6 #}
+              <td colspan="6" class="text-center text-muted py-4">No employees.</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -156,11 +156,13 @@
                 {{ form.address }}
                 {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors|striptags }}</div>{% endif %}
               </div>
-<div class="col-12">
+
+              <div class="col-12">
                 <label class="form-label">Vai trò (Role)</label>
                 {{ form.role_group }}
                 {% if form.role_group.errors %}<div class="text-danger small">{{ form.role_group.errors|striptags }}</div>{% endif %}
               </div>
+
               <div class="col-12">
                 <label class="form-label">Password</label>
                 {{ form.password }}
