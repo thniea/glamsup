@@ -62,9 +62,32 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label fw-semibold">Thumbnail</label>
-                  {{ form.image }}
-                  {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors|striptags }}</div>{% endif %}
+                  <label class="form-label fw-semibold d-block mb-1">Thumbnail</label>
+
+                  <div class="d-flex align-items-center gap-2">
+                    <!-- Nút custom -->
+                    <label for="id_image" class="btn btn-outline-brand btn-sm mb-0">
+                      Choose file
+                    </label>
+
+                    <!-- Text hiển thị trạng thái -->
+                    <span id="file-name" class="text-muted small">
+                      No file chosen
+                    </span>
+                  </div>
+
+                  <!-- Input file thật (ẩn) -->
+                  <input type="file"
+                         name="image"
+                         id="id_image"
+                         accept="image/*"
+                         class="d-none">
+
+                  {% if form.image.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.image.errors|striptags }}
+                    </div>
+                  {% endif %}
                 </div>
 
                 <!-- >>> THÊM Duration -->
@@ -125,4 +148,21 @@
 
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('id_image');
+    const fileNameSpan = document.getElementById('file-name');
+
+    if (input && fileNameSpan) {
+      input.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+          fileNameSpan.textContent = this.files[0].name;
+        } else {
+          fileNameSpan.textContent = 'No file chosen';
+        }
+      });
+    }
+  });
+</script>
+
 {% endblock %}

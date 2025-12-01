@@ -15,12 +15,37 @@
   .services-hero-title{color:#fff;font-weight:900;font-size:clamp(20px,2.2vw,28px);}
   .services-hero-desc{color:#fff;opacity:.95;font-weight:700;font-size:clamp(12px,1.5vw,14px);}
 
-  /* Layout */
-  .layout{display:grid;grid-template-columns:260px 1fr;gap:22px}
-  @media (max-width:960px){ .layout{grid-template-columns:1fr} }
+ /* Layout */
+.layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:22px;
+}
+@media (max-width:960px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+}
 
-  /* Sidebar */
-  .side{border:1px solid var(--edge);border-radius:14px;padding:16px;background:#fff}
+/* Sidebar */
+.side{
+  border:1px solid var(--edge);
+  border-radius:14px;
+  padding:16px;
+  background:#fff;
+
+  /* làm sticky */
+  position:sticky;
+  top:100px;          /* khoảng cách với mép trên – chỉnh 80/90/110 tuỳ chiều cao header */
+  align-self:flex-start;
+}
+
+/* Trên màn nhỏ thì bỏ sticky cho dễ dùng */
+@media (max-width:960px){
+  .side{
+    position:static;
+  }
+}
   .side h3{margin:4px 0 12px;font-weight:900}
   .cat-btn{
     width:100%;display:block;text-align:left;border:2px solid #8b9361;background:#fff;color:#8b9361;
