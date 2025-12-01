@@ -103,57 +103,59 @@
   <div class="col-lg-9 col-md-8">
     {% with current_branch=request.GET.branch %}
 
-    <!-- Hàng 1: tiêu đề + điều hướng tuần -->
-    <div class="header-row">
-      <h2 class="h5 m-0 fw-bold">SCHEDULE MANAGEMENT</h2>
+  {# Hàng 1: chỉ có tiêu đề, căn giữa #}
+  <h1 class="h4 mb-3 fw-bold text-center">SCHEDULE MANAGEMENT</h1>
 
-      <div class="schedule-nav d-flex align-items-center gap-2">
-        <a class="btn btn-outline-brand btn-sm"
-           href="?start={{ prev_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-          « Prev week
-        </a>
+  {# Hàng 2: Branch (trái) + Prev/Date/Next (giữa) + Approve (phải) #}
+  <div class="filter-approve-row">
 
-        <span class="date-pill">
-          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
-          <i class="bi bi-calendar-week"></i>
-        </span>
+    {# Branch filter #}
+    <form method="get" class="d-flex align-items-center gap-2">
+      <label class="small fw-semibold text-muted mb-0">Branch</label>
+      <select name="branch" class="form-select form-select-sm filter-branch"
+              onchange="this.form.submit()">
+        <option value="">All branches</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}"
+            {% if current_branch|default:'' == b.id|stringformat:'s' %}selected{% endif %}>
+            {{ b.name }}
+          </option>
+        {% endfor %}
+      </select>
+      <!-- giữ tuần hiện tại khi đổi branch -->
+      <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}">
+    </form>
 
-        <a class="btn btn-outline-brand btn-sm"
-           href="?start={{ next_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-          Next week »
-        </a>
-      </div>
-    </div>
+    {# Prev week – Date range – Next week (ở giữa) #}
+    <div class="schedule-nav d-flex align-items-center gap-2">
+      <a class="btn btn-outline-brand btn-sm"
+         href="?start={{ prev_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+        « Prev week
+      </a>
 
-    <!-- Hàng 2: Branch filter (trái) + Approve (phải) -->
-    <div class="filter-approve-row">
-      <form method="get" class="d-flex align-items-center gap-2">
-        <label class="small fw-semibold text-muted mb-0">Branch</label>
-        <select name="branch" class="form-select form-select-sm filter-branch"
-                onchange="this.form.submit()">
-          <option value="">All branches</option>
-          {% for b in branches %}
-            <option value="{{ b.id }}"
-              {% if current_branch|default:'' == b.id|stringformat:'s' %}selected{% endif %}>
-              {{ b.name }}
-            </option>
-          {% endfor %}
-        </select>
-        <!-- giữ tuần hiện tại khi đổi branch -->
-        <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}">
-      </form>
+      <span class="date-pill">
+        {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
+        <i class="bi bi-calendar-week"></i>
+      </span>
 
-      <a class="btn btn-outline-brand schedule-approve-btn d-flex align-items-center"
-         href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-        <span class="me-2">Approve Schedule</span>
-        <i class="bi bi-pencil-square"></i>
-        {% if pending|add:0 > 0 %}
-          <span class="badge text-bg-danger ms-2">{{ pending }}</span>
-        {% endif %}
+      <a class="btn btn-outline-brand btn-sm"
+         href="?start={{ next_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+        Next week »
       </a>
     </div>
 
-    {% endwith %}
+    {# Approve Schedule (bên phải) #}
+    <a class="btn btn-outline-brand schedule-approve-btn d-flex align-items-center"
+       href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+      <span class="me-2">Approve Schedule</span>
+      <i class="bi bi-pencil-square"></i>
+      {% if pending|add:0 > 0 %}
+        <span class="badge text-bg-danger ms-2">{{ pending }}</span>
+      {% endif %}
+    </a>
+  </div>
+
+{% endwith %}
 
 
     <div class="card border-2">
