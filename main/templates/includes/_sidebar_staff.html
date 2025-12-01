@@ -19,31 +19,34 @@
     position:sticky; top:1rem;
   }
 
-  /* --- Avatar wrapper mới --- */
+  /* --- Avatar wrapper (ĐÃ SỬA: overflow:visible + đẩy icon ra ngoài) --- */
   .bo-avatar-wrap{
     position:relative;
+    display:inline-block;
     width:72px; height:72px;
     border-radius:50%;
-    overflow:hidden;
     border:3px solid #fff;
     box-shadow:0 0 0 2px #cfd3a9;
+    overflow:visible;                /* <--- trước là hidden, giờ cho tràn ra */
     cursor:pointer;
   }
   .bo-avatar-wrap img{
     width:100%; height:100%;
+    border-radius:50%;
     object-fit:cover;
   }
 
   .bo-avatar-edit{
     position:absolute;
-    right:0; bottom:0;
-    width:22px; height:22px;
+    right:-6px;                      /* <--- đẩy icon tràn ra ngoài avatar */
+    bottom:-6px;
+    width:24px; height:24px;
     border-radius:999px;
     background:#a5aa7f;
     color:#fff;
     display:flex; align-items:center; justify-content:center;
     font-size:12px;
-    box-shadow:0 2px 4px rgba(0,0,0,.25);
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
   }
 
   .bo-avatar-input{ display:none; }

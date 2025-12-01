@@ -10,73 +10,99 @@
   }
   body{ background:var(--bg); font-family:'Nunito',sans-serif; }
 
-  /* ===== Sidebar (chuẩn theo mockup) ===== */
+  /* ===== SIDEBAR ===== */
   .bo-sidebar{
     background:#e1e6cf;
     border-radius:16px;
     padding:16px;
-    position:sticky; top:1rem;
+    position:sticky;
+    top:1rem;
   }
 
-  /* avatar trong sidebar */
-  .bo-avatar-wrap{
+  /* ===== AVATAR + CAMERA ===== */
+
+  /* vỏ ngoài để icon được ló ra ngoài */
+  .bo-avatar-shell{
     position:relative;
-    display:inline-flex;
-    justify-content:center;
-    align-items:center;
+    width:72px;
+    height:72px;
+  }
+
+  /* phần tròn chứa ảnh – luôn clip tròn */
+  .bo-avatar-wrap{
     width:72px;
     height:72px;
     border-radius:50%;
-    overflow:hidden;
     border:3px solid #fff;
     box-shadow:0 0 0 2px #cfd3a9;
-    cursor:pointer;
     background:#fdfcf6;
+    overflow:hidden;          /* cắt ảnh theo hình tròn */
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
   }
+
   .bo-avatar{
     width:100%;
     height:100%;
     object-fit:cover;
   }
+
+  /* icon máy ảnh thò ra ngoài */
   .bo-avatar-edit{
     position:absolute;
-    right:0;
-    bottom:0;
-    width:22px;
-    height:22px;
-    border-radius:999px;
+    right:-4px;              /* ló ra ngoài một chút */
+    bottom:-4px;
+    width:24px;
+    height:24px;
+    border-radius:50%;
     background:#a5aa7f;
     color:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:12px;
-    box-shadow:0 2px 4px rgba(0,0,0,.25);
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
   }
   .bo-avatar-edit i{ line-height:1; }
   .bo-avatar-input{ display:none; }
 
-  .bo-profile .bo-role{ color:#6c7551; font-weight:700; }
+  .bo-profile .bo-role{
+    color:#6c7551;
+    font-weight:700;
+  }
 
-  .bo-menu{ margin-top:12px }
+  /* ===== MENU ===== */
+  .bo-menu{ margin-top:12px; }
+
   .bo-item{
-    display:flex; align-items:center; gap:.75rem;
-    padding:.6rem .8rem; border-radius:12px;
-    color:var(--ink); text-decoration:none; font-weight:800;
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    padding:.6rem .8rem;
+    border-radius:12px;
+    color:var(--ink);
+    text-decoration:none;
+    font-weight:800;
     transition:background .15s, box-shadow .15s;
   }
   .bo-item:hover{
     background:var(--chip);
-    text-decoration: none;
+    text-decoration:none;
   }
   .bo-item.active{
     background:var(--chip);
     box-shadow: inset 0 0 0 2px #d6d1b8;
   }
   .bo-ic{
-    width:36px;height:36px;border-radius:50%;
-    display:grid;place-items:center;
-    border:2px solid var(--edge); color:#71804f;
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    border:2px solid var(--edge);
+    color:#71804f;
     background:#fff;
     flex:0 0 36px;
   }
@@ -85,7 +111,7 @@
 <div class="bo-sidebar">
   <div class="bo-profile d-flex align-items-center gap-3 mb-3">
 
-    {# FORM UPLOAD AVATAR – click vào avatar để chọn ảnh #}
+    {# FORM UPLOAD AVATAR – click vào avatar hoặc icon camera đều được #}
     <form id="avatarForm"
           method="post"
           action="{% url 'main:customer_account' %}"
@@ -93,12 +119,14 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="upload_avatar">
 
-      <label for="id_avatar_input" class="bo-avatar-wrap" title="Change avatar">
-        {% if request.user.avatar %}
-          <img src="{{ request.user.avatar.url }}" class="bo-avatar" alt="avatar">
-        {% else %}
-          <img src="{% static 'img/avatar-placeholder.png' %}" class="bo-avatar" alt="avatar">
-        {% endif %}
+      <label for="id_avatar_input" class="bo-avatar-shell" title="Change avatar">
+        <div class="bo-avatar-wrap">
+          {% if request.user.avatar %}
+            <img src="{{ request.user.avatar.url }}" class="bo-avatar" alt="avatar">
+          {% else %}
+            <img src="{% static 'img/avatar-placeholder.png' %}" class="bo-avatar" alt="avatar">
+          {% endif %}
+        </div>
         <span class="bo-avatar-edit">
           <i class="bi bi-camera-fill"></i>
         </span>
@@ -113,9 +141,7 @@
     </form>
 
     <div>
-      <div class="bo-role small">
-        Customer
-      </div>
+      <div class="bo-role small">Customer</div>
       <div class="fw-bold">
         {{ request.user.full_name|default:request.user.get_full_name|default:request.user.username }}
       </div>
@@ -123,27 +149,22 @@
   </div>
 
   <nav class="bo-menu d-grid gap-2">
-
-    {# 1. PROFILE / ACCOUNT #}
     <a class="bo-item {% if active == 'account' %}active{% endif %}"
        href="{% url 'main:customer_account' %}">
       <span class="bo-ic"><i class="bi bi-person-circle"></i></span>
       Profile
     </a>
 
-    {# 2. MY APPOINTMENTS #}
     <a class="bo-item {% if active == 'my_appointments' %}active{% endif %}"
        href="{% url 'main:my_appointments' %}">
       <span class="bo-ic"><i class="bi bi-calendar2-check"></i></span>
       My Appointments
     </a>
 
-    {# 3. LOYALTY #}
     <a class="bo-item {% if active == 'loyalty' %}active{% endif %}"
        href="{% url 'main:loyalty_history' %}">
       <span class="bo-ic"><i class="bi bi-star"></i></span>
       Loyalty
     </a>
-
   </nav>
 </div>
