@@ -22,7 +22,7 @@
 
   /* Cột Shift thu gọn + căn giữa */
   .shift-col{
-    width: 150px;
+    width:150px;
     text-align:center;
   }
   .shift-cell{
@@ -73,7 +73,7 @@
 
   /* Select Branch: nhỏ hơn + chữ căn giữa */
   .filter-branch{
-    min-width: 160px;
+    min-width:160px;
     border-radius:999px;
     border:2px solid var(--edge);
     padding:.3rem .9rem;
@@ -103,60 +103,57 @@
   <div class="col-lg-9 col-md-8">
     {% with current_branch=request.GET.branch %}
 
-  {# Hàng 1: chỉ có tiêu đề, căn giữa #}
-  <h1 class="h4 mb-3 fw-bold text-center">SCHEDULE MANAGEMENT</h1>
+    {# Hàng 1: chỉ có tiêu đề, căn giữa #}
+    <h1 class="h4 mb-3 fw-bold text-center">SCHEDULE MANAGEMENT</h1>
 
-  {# Hàng 2: Branch (trái) + Prev/Date/Next (giữa) + Approve (phải) #}
-  <div class="filter-approve-row">
+    {# Hàng 2: Branch (trái) + Prev/Date/Next (giữa) + Approve (phải) #}
+    <div class="filter-approve-row">
 
-    {# Branch filter #}
-    <form method="get" class="d-flex align-items-center gap-2">
-      <label class="small fw-semibold text-muted mb-0">Branch</label>
-      <select name="branch" class="form-select form-select-sm filter-branch"
-              onchange="this.form.submit()">
-        <option value="">All branches</option>
-        {% for b in branches %}
-          <option value="{{ b.id }}"
-            {% if current_branch|default:'' == b.id|stringformat:'s' %}selected{% endif %}>
-            {{ b.name }}
-          </option>
-        {% endfor %}
-      </select>
-      <!-- giữ tuần hiện tại khi đổi branch -->
-      <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}">
-    </form>
+      {# Branch filter #}
+      <form method="get" class="d-flex align-items-center gap-2">
+        <label class="small fw-semibold text-muted mb-0">Branch</label>
+        <select name="branch" class="form-select form-select-sm filter-branch"
+                onchange="this.form.submit()">
+          <option value="">All branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}"
+              {% if current_branch|default:'' == b.id|stringformat:'s' %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <!-- giữ tuần hiện tại khi đổi branch -->
+        <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}">
+      </form>
 
-    {# Prev week – Date range – Next week (ở giữa) #}
-    <div class="schedule-nav d-flex align-items-center gap-2">
-      <a class="btn btn-outline-brand btn-sm"
-         href="?start={{ prev_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-        « Prev week
-      </a>
+      {# Prev week – Date range – Next week (ở giữa) #}
+      <div class="schedule-nav d-flex align-items-center gap-2">
+        <a class="btn btn-outline-brand btn-sm"
+           href="?start={{ prev_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+          « Prev week
+        </a>
 
-      <span class="date-pill">
-        {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
-        <i class="bi bi-calendar-week"></i>
-      </span>
+        <span class="date-pill">
+          {{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}
+          <i class="bi bi-calendar-week"></i>
+        </span>
 
-      <a class="btn btn-outline-brand btn-sm"
-         href="?start={{ next_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-        Next week »
+        <a class="btn btn-outline-brand btn-sm"
+           href="?start={{ next_start }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+          Next week »
+        </a>
+      </div>
+
+      {# Approve Schedule (bên phải) #}
+      <a class="btn btn-outline-brand schedule-approve-btn d-flex align-items-center"
+         href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
+        <span class="me-2">Approve Schedule</span>
+        <i class="bi bi-pencil-square"></i>
+        {% if pending|add:0 > 0 %}
+          <span class="badge text-bg-danger ms-2">{{ pending }}</span>
+        {% endif %}
       </a>
     </div>
-
-    {# Approve Schedule (bên phải) #}
-    <a class="btn btn-outline-brand schedule-approve-btn d-flex align-items-center"
-       href="{% url 'main:admin_schedule_review' %}?start={{ week_start|date:'Y-m-d' }}{% if current_branch %}&branch={{ current_branch }}{% endif %}">
-      <span class="me-2">Approve Schedule</span>
-      <i class="bi bi-pencil-square"></i>
-      {% if pending|add:0 > 0 %}
-        <span class="badge text-bg-danger ms-2">{{ pending }}</span>
-      {% endif %}
-    </a>
-  </div>
-
-{% endwith %}
-
 
     <div class="card border-2">
       <div class="card-header bg-transparent text-center fw-semibold">
@@ -205,8 +202,16 @@
           </table>
         </div>
       </div>
+
+      <div class="card-footer bg-transparent text-end">
+        <a class="btn btn-outline-brand btn-sm"
+           href="{% url 'main:admin_staff_shift_report' %}?period=week&branch={{ current_branch }}&from={{ week_start|date:'Y-m-d' }}&to={{ week_end|date:'Y-m-d' }}">
+          Staff shift report
+        </a>
+      </div>
     </div>
 
+    {% endwith %}
   </div>
 </div>
 {% endblock %}

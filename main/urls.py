@@ -68,4 +68,6 @@ urlpatterns = [
     path("backoffice/branches/add/", views.branch_create, name="branch_create"),
     path("backoffice/branches/<int:pk>/", views.branch_detail, name="branch_detail"),
     path("backoffice/branches/<int:pk>/edit/", views.branch_update, name="branch_update"),
+    path("backoffice/staff-shifts/", views.admin_staff_shift_report, name="admin_staff_shift_report"),
+
 ]
