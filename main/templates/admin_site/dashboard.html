@@ -60,6 +60,13 @@
     <div class="col-auto">
       <button class="btn btn-outline-brand">Apply</button>
     </div>
+          <!-- Nút sang trang tổng ca làm việc nhân viên -->
+    <div class="col-auto">
+      <a class="btn btn-outline-brand"
+         href="{% url 'main:admin_staff_shift_report' %}?period={{ period }}&branch={{ current_branch }}&from={{ date_from }}&to={{ date_to }}">
+        Staff shift report
+      </a>
+    </div>
     <div class="col-auto ms-auto">
       <a class="btn btn-brand"
    href="?period={{ period }}&branch={{ current_branch }}&from={{ date_from }}&to={{ date_to }}&export=1">

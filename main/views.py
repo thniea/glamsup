@@ -2161,7 +2161,101 @@ def admin_dashboard(request):
     }
 
     return render(request, "admin_site/dashboard.html", ctx)
+# ===================== Admin: Staff shift report =====================
+@never_cache
+@login_required
+@user_passes_test(is_admin)
+def admin_staff_shift_report(request):
+    """
+    Báo cáo tổng ca làm việc của nhân viên (đã APPROVED):
+      - Lọc theo chi nhánh + khoảng thời gian (week / month / custom)
+      - Thống kê số ca làm việc theo từng nhân viên
+    """
 
+    # --- 1. Đọc filter từ query string (tái sử dụng logic giống admin_dashboard) ---
+    period = request.GET.get("period", "week")       # week | month | custom
+    branch_id = (request.GET.get("branch") or "").strip()
+    from_str = (request.GET.get("from") or "").strip()
+    to_str = (request.GET.get("to") or "").strip()
+
+    today = timezone.localdate()
+
+    # --- 2. Tính khoảng ngày (date_start, date_end) ---
+    if period == "month":
+        date_start = today.replace(day=1)
+        date_end = today
+    elif period == "custom" and from_str and to_str:
+        try:
+            date_start = _date.fromisoformat(from_str)
+            date_end = _date.fromisoformat(to_str)
+        except ValueError:
+            # fallback về tuần hiện tại nếu nhập sai
+            date_start = today - timedelta(days=today.weekday())
+            date_end = today
+            period = "week"
+    else:
+        # mặc định: tuần hiện tại
+        date_start = today - timedelta(days=today.weekday())
+        date_end = today
+        period = "week"
+
+    date_from = date_start.isoformat()
+    date_to = date_end.isoformat()
+
+    # --- 3. Query StaffSchedule đã APPROVED trong khoảng ngày ---
+    sched_qs = (
+        StaffSchedule.objects
+        .select_related("staff", "branch")
+        .filter(
+            work_date__range=(date_start, date_end),
+            status=StaffSchedule.Status.APPROVED,
+        )
+    )
+
+    if branch_id:
+        sched_qs = sched_qs.filter(branch_id=branch_id)
+
+    total_shifts = sched_qs.count()
+
+    # --- 4. Thống kê theo nhân viên ---
+    staff_rows = (
+        sched_qs
+        .values("staff_id", "staff__full_name", "staff__username")
+        .annotate(
+            total_shifts=Count("id"),
+            morning_shifts=Count("id", filter=Q(shift=StaffSchedule.Shift.MORNING)),
+            afternoon_shifts=Count("id", filter=Q(shift=StaffSchedule.Shift.AFTERNOON)),
+            evening_shifts=Count("id", filter=Q(shift=StaffSchedule.Shift.EVENING)),
+        )
+        .order_by("-total_shifts", "staff__full_name", "staff__username")
+    )
+
+    # --- 5. Danh sách chi nhánh + label đang chọn ---
+    branches = Branch.objects.all().order_by("name")
+    branch_label = "All branches"
+    if branch_id:
+        branch_obj = branches.filter(pk=branch_id).first()
+        if branch_obj:
+            branch_label = branch_obj.name
+        else:
+            branch_id = ""
+
+    ctx = {
+        "branches": branches,
+        "current_branch": str(branch_id),
+        "branch_label": branch_label,
+
+        "period": period,
+        "date_from": date_from,
+        "date_to": date_to,
+        "date_start": date_start,
+        "date_end": date_end,
+
+        "total_shifts": total_shifts,
+        "staff_rows": staff_rows,
+    }
+
+    return render(request, "admin_site/staff_shift_report.html", ctx)
 
 @never_cache
 @login_required
