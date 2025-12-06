@@ -531,7 +531,7 @@ def book_now(request):
         appointment_date=appt_date,
         appointment_time=start_time,
         duration_minutes=total_minutes,
-        status=Appointment.Status.PENDING,
+        status=Appointment.Status.CONFIRMED,
         note=note,
         total_price=total_price
     )
@@ -856,8 +856,11 @@ def my_appointments(request):
     # ===== UPCOMING =====
     upcoming_qs = (
         base_qs
-        .exclude(status__in=[Appointment.Status.DONE,
-                             Appointment.Status.CANCELED])
+        .exclude(status__in=[
+            Appointment.Status.DONE,
+            Appointment.Status.CANCELED,
+            Appointment.Status.ONGOING,  #  KTV đã complete thì KH không thấy ở upcoming nữa
+        ])
         .filter(
             Q(appointment_date__gt=today) |
             Q(appointment_date=today, appointment_time__gte=now_t)
@@ -868,7 +871,10 @@ def my_appointments(request):
     # ===== COMPLETED =====
     completed_qs = (
         base_qs
-        .filter(status=Appointment.Status.DONE)
+        .filter(status__in=[
+            Appointment.Status.DONE,
+            Appointment.Status.ONGOING,  #  đưa ONGOING xuống list Completed
+        ])
         .order_by("-appointment_date", "-appointment_time")
     )
 
@@ -1379,11 +1385,11 @@ def receptionist_appointments(request):
 @user_passes_test(is_receptionist)
 def check_in(request, pk: int):
     """
-    Lễ tân xác nhận khách đã đến → ARRIVED.
+    Lễ tân xác nhận khách đã đến → IN_PROGRESS.
     Hiển thị message rồi quay về dashboard.
     """
     appt = get_object_or_404(Appointment, pk=pk)
-    appt.status = Appointment.Status.ARRIVED
+    appt.status = Appointment.Status.IN_PROGRESS
     appt.save(update_fields=["status"])
     messages.success(request, f"Successfully checked in for appointment { _make_booking_code(appt.id) }.")
     # quay lại trang trước (nếu có)
