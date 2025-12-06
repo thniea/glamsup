@@ -601,54 +601,54 @@ def payment(request, code: str):
         raise Http404("Appointment not found")
 
     pay = get_object_or_404(Payment, appointment=appt)
-    lines = (AppointmentService.objects
-             .filter(appointment=appt)
-             .select_related("service"))
+    lines = (
+        AppointmentService.objects
+        .filter(appointment=appt)
+        .select_related("service")
+    )
 
     subtotal = sum((l.unit_price or 0) * (l.quantity or 1) for l in lines)
     u = request.user
-    # ====== LOYALTY CHỈ ÁP DỤNG KHI CÓ customer ======
+
+    # ===== LOYALTY CHỈ ÁP DỤNG KHI CÓ customer =====
     total_vnd = int(appt.total_price or 0)
     customer = appt.customer
+
+    available_points = 0
+    discount_vnd = 0
+    points_used = 0
+
+    # NEW: dùng session để nhớ khách có đang chọn dùng điểm không
+    session_key = f"payment_use_points_{appt.pk}"
+    use_points = bool(request.session.get(session_key, False))
 
     if customer:
         lp, _ = LoyaltyPoints.objects.get_or_create(customer=customer)
         available_points = lp.current_points
 
-        discount_vnd = 0
-        points_used = 0
+        # NEW: xử lý nút "Apply points" / "Cancel"
+        if request.method == "POST":
+            action = request.POST.get("action", "")
+            if action == "apply_points":
+                if available_points >= 100:
+                    use_points = True
+                    request.session[session_key] = True
+            elif action == "clear_points":
+                use_points = False
+                request.session[session_key] = False
 
-        if available_points >= 100:
+        # NEW: chỉ khi use_points == True mới tính giảm giá
+        if use_points and available_points >= 100:
+            # Dùng số điểm là bội số của 10 (10 điểm = 1.000đ)
             usable_points = (available_points // 10) * 10
             if usable_points >= 100:
                 points_used = usable_points
                 discount_vnd = (points_used // 10) * 1000
-    else:
-        available_points = 0
-        discount_vnd = 0
-        points_used = 0
-
-    final_amount = max(0, total_vnd - discount_vnd)
-    # ====== CHỈNH 1: TÍNH GIẢM GIÁ TỪ ĐIỂM LOYALTY ======
-    total_vnd = int(appt.total_price or 0)
-
-    lp, _ = LoyaltyPoints.objects.get_or_create(customer=u)
-    available_points = lp.current_points
-
-    discount_vnd = 0
-    points_used = 0
-
-    # Chỉ khi >= 100 điểm mới được đổi
-    if available_points >= 100:
-        # Dùng số điểm là bội số của 10 (để quy đổi 10 điểm = 1.000đ)
-        usable_points = (available_points // 10) * 10
-        if usable_points >= 100:
-            points_used = usable_points
-            discount_vnd = (points_used // 10) * 1000
+    # nếu không có customer thì giữ mặc định 0
 
     # Tổng phải trả sau giảm
     final_amount = max(0, total_vnd - discount_vnd)
-    # ====== HẾT CHỈNH 1 ======
+    # ===== HẾT PHẦN LOYALTY =====
 
     ctx = {
         "appointment": appt,
@@ -656,12 +656,12 @@ def payment(request, code: str):
         "lines": lines,
         "subtotal_vnd": int(subtotal or 0),
 
-        # ====== CHỈNH 2: DÙNG final_amount ======
+        # Dùng final_amount + thông tin loyalty
         "amount_vnd": final_amount,
         "discount_vnd": discount_vnd,
         "points_used": points_used,
         "available_points": available_points,
-        # ====== HẾT CHỈNH 2 ======
+        "use_points": use_points,   # NEW: để template biết đang áp dụng hay chưa
 
         "code": code,
         "bank": BANK,  # dict cố định
@@ -672,10 +672,12 @@ def payment(request, code: str):
 
 
 
+
 from django.views.decorators.http import require_POST
 
 @require_POST
 @login_required
+
 def payment_complete(request, code: str):
     appt_pk = _code_to_pk(code)
     appt = get_object_or_404(Appointment, pk=appt_pk)
@@ -683,8 +685,6 @@ def payment_complete(request, code: str):
 
     if is_customer(request.user) and appt.customer and appt.customer != request.user:
         raise Http404("Appointment not found")
-
-    pay = get_object_or_404(Payment, appointment=appt)
 
     if pay.method == Payment.Method.ONLINE:
         if pay.status == Payment.Status.PAID:
@@ -696,36 +696,45 @@ def payment_complete(request, code: str):
         appt.status = Appointment.Status.CONFIRMED
         appt.save(update_fields=["status"])
 
-        # ====== CHỈNH: TRỪ ĐIỂM LOYALTY NẾU CÓ ======
-        lp, _ = LoyaltyPoints.objects.get_or_create(customer=request.user)
-        available_points = lp.current_points
+        # ====== CHỈNH: CHỈ TRỪ ĐIỂM KHI KHÁCH ĐÃ CHỌN "APPLY" ======
+        customer = appt.customer
+        session_key = f"payment_use_points_{appt.pk}"
+        use_points = bool(request.session.get(session_key, False))  # NEW
 
-        total_vnd = int(appt.total_price or 0)
-        points_used = 0
-        discount_vnd = 0
+        if customer and use_points:
+            lp, _ = LoyaltyPoints.objects.get_or_create(customer=customer)
+            available_points = lp.current_points
 
-        if available_points >= 100:
-            usable_points = (available_points // 10) * 10
-            if usable_points >= 100:
-                points_used = usable_points
-                discount_vnd = (points_used // 10) * 1000
+            total_vnd = int(appt.total_price or 0)
+            points_used = 0
+            discount_vnd = 0
 
-        if points_used >= 100:
-            lp.current_points -= points_used
-            lp.points_used += points_used
-            lp.save(update_fields=["current_points", "points_used", "last_updated"])
+            if available_points >= 100:
+                usable_points = (available_points // 10) * 10
+                if usable_points >= 100:
+                    points_used = usable_points
+                    discount_vnd = (points_used // 10) * 1000
 
-            LoyaltyTransaction.objects.create(
-                customer=request.user,
-                appointment=appt,
-                type=LoyaltyTransaction.Type.USE,
-                points=-points_used,
-                balance_after=lp.current_points,
-                description=(
-                    f"Redeemed {points_used} points for a {discount_vnd:,} VND "
-                    f"for booking BK{appt.id:06d}"
-                ),
-            )
+            if points_used >= 100:
+                lp.current_points -= points_used
+                lp.points_used += points_used
+                lp.save(update_fields=["current_points", "points_used", "last_updated"])
+
+                LoyaltyTransaction.objects.create(
+                    customer=customer,
+                    appointment=appt,
+                    type=LoyaltyTransaction.Type.USE,
+                    points=-points_used,
+                    balance_after=lp.current_points,
+                    description=(
+                        f"Redeemed {points_used} points for a {discount_vnd:,} VND "
+                        f"for booking BK{appt.id:06d}"
+                    ),
+                )
+
+            # NEW: reset cờ sau khi thanh toán xong
+            request.session[session_key] = False
+        # ====== HẾT PHẦN LOYALTY ======
 
         messages.success(request, "Payment successful. The appointment has been confirmed.")
     else:
@@ -735,8 +744,6 @@ def payment_complete(request, code: str):
         )
 
     return redirect("main:order_result", code=code)
-
-
 
 @login_required
 def order_result(request, code: str):
