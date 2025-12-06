@@ -6,13 +6,20 @@
 {% block head_extra %}
 <style>
   .card{ border:2px solid #cfd3a9; border-radius:12px; }
-  .chip { display:inline-block; padding:.2rem .6rem; border-radius:999px; font-size:.75rem; font-weight:700; }
-  .chip-pending { background:#ffeb3b; color:#333; }
-  .chip-confirmed { background:#c8e6c9; color:#388e3c; }
-  .chip-arrived { background:#2196f3; color:#fff; }
-  .chip-ongoing { background:#ff9800; color:#fff; }
+
+  .chip{
+    display:inline-block;
+    padding:.2rem .6rem;
+    border-radius:999px;
+    font-size:.75rem;
+    font-weight:700;
+  }
+  .chip-confirmed{ background:#c8e6c9; color:#388e3c; }
+  .chip-arrived{ background:#2196f3; color:#fff; }
+  .chip-ongoing{ background:#ff9800; color:#fff; }
 </style>
 {% endblock %}
+
 
 {% block content %}
 <div class="row g-4">
@@ -43,30 +50,46 @@
                   <p class="mb-0 small text-muted">Kỹ thuật: {{ appt.staff_assigned.full_name }}</p>
                 </div>
               </div>
-
               <div class="text-end">
-                {% if appt.status == 'PENDING' %}
-                  <span class="chip chip-pending">Chờ xác nhận</span>
-                {% elif appt.status == 'CONFIRMED' %}
-                  <span class="chip chip-confirmed">Đã xác nhận</span>
-                {% elif appt.status == 'IN_PROGRESS' %}
-                  <span class="chip chip-ongoing">Đang làm</span>
-                {% elif appt.status == 'ONGOING' %}
-                  <span class="chip chip-ongoing">Đã hoàn tất (chờ check-out)</span>
-                {% elif appt.status == 'DONE' %}
-                  <span class="chip chip-confirmed">Đã hoàn tất</span>
-                {% endif %}
 
-
-                <div class="mt-2 d-grid gap-1">
+                  {# ==== STATUS PILL ==== #}
                   {% if appt.status == 'CONFIRMED' %}
-                    <a href="{% url 'main:check_in' appt.id %}" class="btn btn-sm btn-success">Check-in</a>
-                  {% elif appt.status == 'IN_PROGRESS' or appt.status == 'ONGOING' %}
-                    <a href="{% url 'main:check_out' appt.id %}" class="btn btn-sm btn-warning">Check-out</a>
+                      <span class="chip chip-confirmed">CONFIRMED</span>
+
+                  {% elif appt.status == 'IN_PROGRESS' %}
+                      <span class="chip chip-ongoing">IN PROGRESS</span>
+
+                  {% elif appt.status == 'ONGOING' %}
+                      <span class="chip chip-ongoing">ONGOING</span>
+
+                  {% elif appt.status == 'DONE' %}
+                      <span class="chip chip-confirmed">COMPLETED</span>
+
                   {% else %}
-                    <button class="btn btn-sm btn-outline-dark" disabled>Chờ</button>
+                      <span class="chip chip-arrived">{{ appt.status }}</span>
                   {% endif %}
-                </div>
+
+                  {# ==== ACTION BUTTONS ==== #}
+                  <div class="mt-2 d-grid gap-2" style="min-width:120px">
+
+                    {% if appt.status == 'CONFIRMED' %}
+                        <a href="{% url 'main:check_in' appt.id %}"
+                           class="btn btn-success btn-sm">
+                           Check-in
+                        </a>
+
+                    {% elif appt.status == 'IN_PROGRESS' or appt.status == 'ONGOING' %}
+                        <a href="{% url 'main:check_out' appt.id %}"
+                           class="btn btn-warning btn-sm">
+                           Check-out
+                        </a>
+
+                    {% else %}
+                        <button class="btn btn-outline-dark btn-sm" disabled>
+                          Chờ
+                        </button>
+                    {% endif %}
+                  </div>
               </div>
             </div>
             {% endfor %}
