@@ -49,16 +49,19 @@
                   <span class="chip chip-pending">Chờ xác nhận</span>
                 {% elif appt.status == 'CONFIRMED' %}
                   <span class="chip chip-confirmed">Đã xác nhận</span>
-                {% elif appt.status == 'ARRIVED' %}
-                  <span class="chip chip-arrived">Đã đến</span>
-                {% elif appt.status == 'ONGOING' %}
+                {% elif appt.status == 'IN_PROGRESS' %}
                   <span class="chip chip-ongoing">Đang làm</span>
+                {% elif appt.status == 'ONGOING' %}
+                  <span class="chip chip-ongoing">Đã hoàn tất (chờ check-out)</span>
+                {% elif appt.status == 'DONE' %}
+                  <span class="chip chip-confirmed">Đã hoàn tất</span>
                 {% endif %}
+
 
                 <div class="mt-2 d-grid gap-1">
                   {% if appt.status == 'CONFIRMED' %}
                     <a href="{% url 'main:check_in' appt.id %}" class="btn btn-sm btn-success">Check-in</a>
-                  {% elif appt.status == 'ARRIVED' or appt.status == 'ONGOING' %}
+                  {% elif appt.status == 'IN_PROGRESS' or appt.status == 'ONGOING' %}
                     <a href="{% url 'main:check_out' appt.id %}" class="btn btn-sm btn-warning">Check-out</a>
                   {% else %}
                     <button class="btn btn-sm btn-outline-dark" disabled>Chờ</button>
