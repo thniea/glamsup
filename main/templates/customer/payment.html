@@ -68,7 +68,7 @@
                 </td>
               </tr>
 
-              {# ====== CHỈNH: HIỂN THỊ GIẢM GIÁ TỪ ĐIỂM ====== #}
+              {# HIỂN THỊ GIẢM GIÁ TỪ ĐIỂM (NẾU ĐÃ ÁP DỤNG) #}
               {% if discount_vnd and discount_vnd > 0 %}
               <tr>
                 <td class="fw-semibold text-success">
@@ -79,7 +79,6 @@
                 </td>
               </tr>
               {% endif %}
-              {# ====== HẾT PHẦN CHỈNH ====== #}
 
               <tr>
                 <td class="fw-bold">Grand Total:</td>
@@ -88,11 +87,38 @@
             </tbody>
           </table>
 
-          {# Optional: thông tin điểm hiện có #}
+          {# THÔNG TIN ĐIỂM + NÚT ÁP DỤNG #}
           <div class="mt-2 small text-muted">
-            Reward points balance: <strong>{{ available_points }}</strong> points
-            {% if available_points < 100 %}
-              · (cần tối thiểu 100 điểm để được giảm giá)
+            Reward points balance:
+            <strong>{{ available_points }}</strong> points
+
+            {% if available_points >= 100 %}
+              {% if use_points %}
+                · Points are being applied to this order.
+                <form method="post"
+                      action="{% url 'main:payment' code=code %}"
+                      class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="clear_points">
+                  <button type="submit"
+                          class="btn btn-link btn-sm p-0 align-baseline">
+                    Cancel
+                  </button>
+                </form>
+              {% else %}
+                <form method="post"
+                      action="{% url 'main:payment' code=code %}"
+                      class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="apply_points">
+                  <button type="submit"
+                          class="btn btn-link btn-sm p-0 align-baseline">
+                    Apply now
+                  </button>
+                </form>
+              {% endif %}
+            {% else %}
+              · (Need at least 100 points to redeem)
             {% endif %}
           </div>
         </div>
