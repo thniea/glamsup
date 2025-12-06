@@ -15,9 +15,8 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.db import models
 from django.db.models import Avg
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from .forms import StaffSelfScheduleForm, BranchForm
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -29,7 +28,7 @@ from .models import User, Branch, StaffSchedule
 from .forms import ScheduleForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import password_validation
-
+import csv
 from .forms import (
     LoginForm, ContactForm, BookingForm, FeedbackForm,
     EmployeeForm, ServiceForm, ScheduleForm
@@ -1956,7 +1955,6 @@ def staff_appointments(request):
 @never_cache
 @login_required
 @user_passes_test(is_admin)
-
 def admin_dashboard(request):
     """
     Admin Dashboard:
@@ -2026,23 +2024,26 @@ def admin_dashboard(request):
 
     # ===== 4b. Export CSV nếu có ?export=1 =====
     if request.GET.get("export") == "1":
+        # tạo HttpResponse với content type CSV
         filename = f"appointments_{date_start.strftime('%Y%m%d')}_{date_end.strftime('%Y%m%d')}.csv"
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response)
+        # header
         writer.writerow([
             "Appointment ID",
             "Date",
             "Time",
             "Branch",
             "Customer",
+            "Services",  # <── thêm cột dịch vụ
             "Status",
             "Total price",
             "Paid amount",
         ])
 
-        # chuẩn bị map tiền đã trả cho từng appointment
+        # map tiền đã trả cho từng appointment
         paid_map = {
             row["appointment_id"]: row["total"]
             for row in paid_payments
@@ -2050,13 +2051,28 @@ def admin_dashboard(request):
             .annotate(total=Sum("amount"))
         }
 
+        # map danh sách dịch vụ cho từng appointment
+        svc_qs = (
+            AppointmentService.objects
+            .filter(appointment__in=appt_qs)
+            .select_related("service")
+        )
+        services_map = {}
+        for line in svc_qs:
+            appt_id = line.appointment_id
+            name = line.service.service_name if line.service else "Service"
+            services_map.setdefault(appt_id, []).append(name)
+
+        # ghi từng dòng
         for appt in appt_qs.select_related("branch", "customer"):
+            services_str = "; ".join(services_map.get(appt.id, []))
             writer.writerow([
                 appt.id,
                 appt.appointment_date.isoformat(),
                 appt.appointment_time.strftime("%H:%M") if appt.appointment_time else "",
                 appt.branch.name if appt.branch else "",
                 appt.customer.get_full_name() or appt.customer.username,
+                services_str,  # <── giá trị cột dịch vụ
                 appt.get_status_display(),
                 float(appt.total_price or 0),
                 float(paid_map.get(appt.id) or 0),
@@ -2161,6 +2177,7 @@ def admin_dashboard(request):
     }
 
     return render(request, "admin_site/dashboard.html", ctx)
+
 # ===================== Admin: Staff shift report =====================
 @never_cache
 @login_required
