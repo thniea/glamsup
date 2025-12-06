@@ -141,8 +141,8 @@
                   <span class="dot dot-green"></span> Confirmed
                 {% elif ap.status == 'CANCELED' %}
                   <span class="dot dot-red"></span> Canceled
-                {% elif ap.status == 'PENDING' %}
-                  <span class="dot dot-yellow"></span> Pending
+                {% elif ap.status == 'IN_PROGRESS' %}
+                  <span class="dot dot-yellow"></span> In progress
                 {% else %}
                   <span class="dot"></span> {{ ap.status_label }}
                 {% endif %}

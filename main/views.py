@@ -839,8 +839,14 @@ def _service_thumb(svc):
 @user_passes_test(is_customer)
 def my_appointments(request):
     """
+     UPCOMING:
+      - CONFIRMED / IN_PROGRESS (ngày >= hiện tại)
+    COMPLETED:
+      - ONGOING  (KTV complete, chờ lễ tân) -> UI: ONGOING
+      - DONE     (Lễ tân checkout xong)     -> UI: Completed
+
     Trang lịch hẹn của KH:
-      - Phần trên: Upcoming (các lịch tương lai, chưa DONE/CANCELED)
+      - Phần trên: Upcoming (các lịch tương lai)
       - Phần dưới: Completed (các lịch đã DONE)
     """
     today = timezone.localdate()
@@ -856,11 +862,12 @@ def my_appointments(request):
     # ===== UPCOMING =====
     upcoming_qs = (
         base_qs
-        .exclude(status__in=[
-            Appointment.Status.DONE,
-            Appointment.Status.CANCELED,
-            Appointment.Status.ONGOING,  #  KTV đã complete thì KH không thấy ở upcoming nữa
-        ])
+        .filter(
+            status__in=[
+                Appointment.Status.CONFIRMED,  # khách vừa đặt xong
+                Appointment.Status.IN_PROGRESS,  # lễ tân check-in
+            ]
+        )
         .filter(
             Q(appointment_date__gt=today) |
             Q(appointment_date=today, appointment_time__gte=now_t)
@@ -872,8 +879,8 @@ def my_appointments(request):
     completed_qs = (
         base_qs
         .filter(status__in=[
+            Appointment.Status.ONGOING,
             Appointment.Status.DONE,
-            Appointment.Status.ONGOING,  #  đưa ONGOING xuống list Completed
         ])
         .order_by("-appointment_date", "-appointment_time")
     )
@@ -890,8 +897,7 @@ def my_appointments(request):
         # được hủy nếu > 3h và đang chờ/xác nhận
         can_cancel = (
             (start_dt - now).total_seconds() > 3 * 3600
-            and appt.status in [Appointment.Status.PENDING,
-                                Appointment.Status.CONFIRMED]
+            and appt.status in [Appointment.Status.CONFIRMED]
         )
 
         # dòng service đầu (đủ cho thẻ)
@@ -1843,9 +1849,9 @@ def staff_appointments(request):
     KTV xem các lịch hẹn mình được phân công.
     Cho phép đánh dấu Completed / Uncompleted.
      Filter:
-      - upcoming  (mặc định): các lịch chưa DONE và còn ở hiện tại / tương lai
-      - completed: các lịch đã DONE
-      - all      : tất cả lịch (không phân biệt trạng thái / thời gian)
+      - upcoming  (mặc định): các lịch chưa xong và còn ở hiện tại / tương lai
+      - completed: các lịch đã hoàn thành nhân viên check out
+      - all      : tất cả lịch
     """
     staff = request.user
     # ---- đọc filter từ query string (mặc định: upcoming) ----
@@ -1867,7 +1873,7 @@ def staff_appointments(request):
     # áp dụng filter
     # áp dụng filter
     if status_filter == "completed":
-        # Với KTV: coi cả ONGOING (đã làm xong, chờ lễ tân) và DONE là "Completed"
+        #  ONGOING (đã làm xong, chờ lễ tân) và DONE là "Completed"
         appt_qs = appt_qs.filter(
             status__in=[Appointment.Status.ONGOING, Appointment.Status.DONE]
         )
