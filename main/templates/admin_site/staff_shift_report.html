@@ -1,0 +1,167 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Staff Shift Report · Glamup Nails{% endblock %}
+
+{% block head_extra %}
+<style>
+  :root{
+    --brand:#a5aa7f;
+    --bg:#f6f5ec;
+    --edge:#cfd3a9;
+  }
+  body{ background:var(--bg); font-family:'Nunito',sans-serif; }
+
+  .card{ border:2px solid var(--edge); border-radius:12px; }
+  .card-header{ background:#fdfcf6; border-bottom:2px solid #e4e1cf; font-weight:700; }
+  .btn-outline-brand{
+    border-color:var(--brand); color:var(--brand);
+  }
+  .btn-outline-brand:hover{
+    background:var(--brand); color:#fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Sidebar -->
+  <div class="col-md-4 col-lg-3">
+    {% include 'includes/_sidebar_admin.html' with active='dashboard' %}
+  </div>
+
+  <div class="col-lg-9">
+    <h1 class="h4 mb-3 fw-bold text-center">STAFF SHIFT REPORT</h1>
+
+    <!-- Filter: dùng lại logic giống Dashboard -->
+    <form class="row g-2 align-items-end mb-4" method="get">
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Branch</label>
+        <select name="branch" class="form-select">
+          <option value="">— All branches —</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if current_branch|stringformat:'s' == b.id|stringformat:'s' %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Period</label>
+        <select name="period" id="period" class="form-select">
+          <option value="week"  {% if period == 'week' %}selected{% endif %}>This week</option>
+          <option value="month" {% if period == 'month' %}selected{% endif %}>This month</option>
+          <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom</option>
+        </select>
+      </div>
+      <div class="col-md-3 custom-range">
+        <label class="form-label small mb-1">From</label>
+        <input type="date" name="from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-3 custom-range">
+        <label class="form-label small mb-1">To</label>
+        <input type="date" name="to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-brand">Apply</button>
+      </div>
+      <div class="col-auto ms-auto">
+        <a href="{% url 'main:admin_dashboard' %}?period={{ period }}&branch={{ current_branch }}&from={{ date_from }}&to={{ date_to }}"
+           class="btn btn-outline-brand">
+          ← Back to Dashboard
+        </a>
+      </div>
+    </form>
+
+    <!-- Summary KPI -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="card border-2">
+          <div class="card-body text-center">
+            <div class="text-muted small">Total approved shifts</div>
+            <div class="fs-3 fw-bold">{{ total_shifts }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-2">
+          <div class="card-body text-center">
+            <div class="text-muted small">Period</div>
+            <div class="fw-semibold">
+              {{ date_start|date:"d/m/Y" }} – {{ date_end|date:"d/m/Y" }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-2">
+          <div class="card-body text-center">
+            <div class="text-muted small">Branch</div>
+            <div class="fw-semibold">{{ branch_label }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bảng thống kê theo nhân viên -->
+    <div class="card">
+      <div class="card-header bg-transparent fw-semibold">
+        Shifts per staff (approved only)
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="text-center" style="width:60px;">#</th>
+                <th>Staff</th>
+                <th class="text-center">Total shifts</th>
+                <th class="text-center">Morning</th>
+                <th class="text-center">Afternoon</th>
+                <th class="text-center">Evening</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in staff_rows %}
+              <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>
+                  {{ row.staff__full_name|default:row.staff__username }}
+                  <div class="small text-muted">@{{ row.staff__username }}</div>
+                </td>
+                <td class="text-center fw-bold">{{ row.total_shifts }}</td>
+                <td class="text-center">{{ row.morning_shifts }}</td>
+                <td class="text-center">{{ row.afternoon_shifts }}</td>
+                <td class="text-center">{{ row.evening_shifts }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  No approved shifts in this period.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+(function(){
+  const periodSel = document.getElementById('period');
+  const customEls = document.querySelectorAll('.custom-range');
+  const toggleRange = () => {
+    const on = periodSel.value === 'custom';
+    customEls.forEach(e => e.style.display = on ? '' : 'none');
+  };
+  toggleRange();
+  periodSel.addEventListener('change', toggleRange);
+})();
+</script>
+{% endblock %}
