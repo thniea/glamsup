@@ -137,12 +137,12 @@ TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_TZ = True
 
 # settings.py (thêm hoặc kiểm tra)
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" #Cách gửi email mà hệ thống sử dụng là SMTP, kết nối với gmail để gửi mail
+EMAIL_HOST = "smtp.gmail.com" #Đây là địa chỉ máy chủ mail (SMTP server), smtp.gmail.com là server gửi mail của Google.
+EMAIL_PORT = 587 #Đây là cổng kết nối SMTP
+EMAIL_USE_TLS = True #Mã hóa dữ liệu khi gửi mail,Tránh bị nghe lén, đánh cắp thông tin,Nếu không bật TLS,Gmail từ chối kết nối
 EMAIL_HOST_USER = "tothiennha.ec@gmail.com"
-EMAIL_HOST_PASSWORD = "ocedmxogauwcztfk"   # <-- dán liền không có dấu cách
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = "ocedmxogauwcztfk"
+DEFAULT_FROM_EMAIL = "Glamup Nails <tothiennha.ec@gmail.com>"
 
 
