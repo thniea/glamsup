@@ -991,12 +991,13 @@ def customer_feedback(request, booking_id: int):
     - Form tự prefill thông tin lịch + dịch vụ
     """
     appt = get_object_or_404(Appointment, pk=booking_id, customer=request.user)
-
+    #lấy đúng lịch hẹn của khách hàng
     # Chỉ cho feedback khi đã hoàn tất
     if appt.status != Appointment.Status.DONE:
         messages.error(request, "You can only leave a review after the appointment is completed.")
         return redirect("main:my_appointments")
 
+    #hiển thị “Order summary”: tên dịch vụ, giá, hình ảnh trong template.
     first_line = appt.service_lines.select_related("service").first()
     main_service = first_line.service if first_line else None
     price = (first_line.unit_price or 0) if first_line else 0
@@ -1014,6 +1015,7 @@ def customer_feedback(request, booking_id: int):
                 customer=request.user,
                 service=main_service,
             )
+
             review.product_rating = cd["product_rating"]
             review.service_rating = cd["service_rating"]
             review.comment = cd.get("comment", "").strip()
@@ -1044,6 +1046,7 @@ def customer_feedback(request, booking_id: int):
                 "comment": existing.comment,
             }
         form = FeedbackForm(initial=init)
+        #Khi khách quay lại trang feedback, họ sẽ thấy lại rating và comment trước đó → dễ chỉnh sửa.
 
     # Data cho ORDER SUMMARY trong template
     order = {
@@ -1470,14 +1473,19 @@ def send_review_invitation(request, appt: Appointment) -> bool:
         return False
 
     # 3) Tạo link tới trang feedback
-    review_url = request.build_absolute_uri(
-        reverse("main:my_appointments")
+    review_url = request.build_absolute_uri( #biến URL tương đối thành URL đầy đủ
+        reverse("main:my_appointments") #tạo URL nội bộ Django, ví dụ: /my/appointments/
     )
 
-    subject = "We invite you to review your experience at GlamUp Nails 💅"
+    #Nếu chưa login → Django redirect sang login.
+    #Sau khi login → vào trang “My Appointments” → từ đó có nút Review.
+
+    subject = "We invite you to review your experience at GlamUp Nails 💅" #Tiêu đề email
 
     text_message = (
-        f"Dear {getattr(customer, 'full_name', '') or customer.username},\n\n"
+        f"Dear {getattr(customer, 'full_name', '') or customer.username},\n\n" 
+        #Nếu field này không tồn tại hoặc rỗng → trả về chuỗi rỗng
+        #Nếu vế trước rỗng / False → dùng username
         "Thank you for trusting and using the services at GlamUp Nails.\n"
         "Please take a few moments to review your experience here:\n"
         f"{review_url}\n\n"
@@ -1498,12 +1506,17 @@ def send_review_invitation(request, appt: Appointment) -> bool:
     </p>
     <p>Wishing you a wonderful and radiant day! 🌸🌼</p>
     """
+    #Khi gửi email em luôn có một bản nội dung text thuần để làm fallback cho các mail client không hỗ trợ HTML
+    # hoặc chặn HTML. Phần tên người nhận em ưu tiên lấy full_name, nếu khách chưa nhập thì fallback sang username
+    # để đảm bảo email luôn có lời chào cá nhân hóa và không bị trống
 
     try:
         send_mail(
+            #API gửi mail của Django, wrapper của SMTP.
             subject,
             text_message,
             settings.DEFAULT_FROM_EMAIL,
+            #email hệ thống (cấu hình trong settings).
             [customer.email],
             fail_silently=False,   # 👈 TẠM THỜI cho False để nếu lỗi SMTP sẽ hiện ở console
             html_message=html_message,
